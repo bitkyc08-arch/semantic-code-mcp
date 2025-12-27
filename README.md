@@ -104,17 +104,18 @@ Add the server configuration to the `mcpServers` object in your config file:
 
 Override configuration settings via environment variables in your MCP config:
 
-| Variable                         | Type    | Default   | Description                           |
-| -------------------------------- | ------- | --------- | ------------------------------------- |
-| `SMART_CODING_VERBOSE`           | boolean | `false`   | Enable detailed logging               |
-| `SMART_CODING_BATCH_SIZE`        | number  | `100`     | Files to process in parallel          |
-| `SMART_CODING_MAX_FILE_SIZE`     | number  | `1048576` | Max file size in bytes (1MB)          |
-| `SMART_CODING_CHUNK_SIZE`        | number  | `15`      | Lines of code per chunk               |
-| `SMART_CODING_MAX_RESULTS`       | number  | `5`       | Max search results                    |
-| `SMART_CODING_SMART_INDEXING`    | boolean | `true`    | Enable smart project detection        |
-| `SMART_CODING_WATCH_FILES`       | boolean | `false`   | Enable file watching for auto-reindex |
-| `SMART_CODING_SEMANTIC_WEIGHT`   | number  | `0.7`     | Weight for semantic similarity (0-1)  |
-| `SMART_CODING_EXACT_MATCH_BOOST` | number  | `1.5`     | Boost for exact text matches          |
+| Variable                         | Type    | Default                   | Description                           |
+| -------------------------------- | ------- | ------------------------- | ------------------------------------- |
+| `SMART_CODING_VERBOSE`           | boolean | `false`                   | Enable detailed logging               |
+| `SMART_CODING_BATCH_SIZE`        | number  | `100`                     | Files to process in parallel          |
+| `SMART_CODING_MAX_FILE_SIZE`     | number  | `1048576`                 | Max file size in bytes (1MB)          |
+| `SMART_CODING_CHUNK_SIZE`        | number  | `15`                      | Lines of code per chunk               |
+| `SMART_CODING_MAX_RESULTS`       | number  | `5`                       | Max search results                    |
+| `SMART_CODING_SMART_INDEXING`    | boolean | `true`                    | Enable smart project detection        |
+| `SMART_CODING_WATCH_FILES`       | boolean | `false`                   | Enable file watching for auto-reindex |
+| `SMART_CODING_SEMANTIC_WEIGHT`   | number  | `0.7`                     | Weight for semantic similarity (0-1)  |
+| `SMART_CODING_EXACT_MATCH_BOOST` | number  | `1.5`                     | Boost for exact text matches          |
+| `SMART_CODING_EMBEDDING_MODEL`   | string  | `Xenova/all-MiniLM-L6-v2` | AI embedding model to use             |
 
 **Example with environment variables:**
 
@@ -167,30 +168,6 @@ The server indexes your code in four steps:
 4. **Storage**: Saves embeddings to `.smart-coding-cache/` for fast startup
 
 When you search, your query is converted to the same vector format and compared against all code chunks using cosine similarity. The most relevant matches are returned.
-
-### Smart Project Detection
-
-The server detects your project type by looking for marker files and automatically applies appropriate ignore patterns:
-
-**JavaScript/Node** (package.json found)
-
-- Ignores: node_modules, dist, build, .next, coverage
-
-**Python** (requirements.txt or pyproject.toml)
-
-- Ignores: **pycache**, venv, .pytest_cache, .tox
-
-**Android** (build.gradle)
-
-- Ignores: .gradle, build artifacts, generated code
-
-**iOS** (Podfile)
-
-- Ignores: Pods, DerivedData, xcuserdata
-
-**And more**: Go, PHP, Rust, Ruby, .NET
-
-This typically reduces indexed file count by 100x. A project with 50,000 files (including node_modules) indexes just 500 actual source files.
 
 ## Configuration
 
