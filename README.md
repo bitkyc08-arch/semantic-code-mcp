@@ -36,6 +36,12 @@ Install globally via npm:
 npm install -g smart-coding-mcp
 ```
 
+To update to the latest version:
+
+```bash
+npm update -g smart-coding-mcp
+```
+
 ## Configuration
 
 Add to your MCP configuration file. The location depends on your IDE and OS:
