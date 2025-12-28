@@ -1,16 +1,39 @@
 export class CacheClearer {
-  constructor(embedder, cache, config) {
+  constructor(embedder, cache, config, indexer) {
     this.cache = cache;
     this.config = config;
+    this.indexer = indexer;
+    this.isClearing = false;
   }
 
   async execute() {
-    await this.cache.clear();
-    return {
-      success: true,
-      message: `Cache cleared successfully. Next indexing will be a full rebuild.`,
-      cacheDirectory: this.config.cacheDirectory
-    };
+    // Check if indexing is in progress
+    if (this.indexer && this.indexer.isIndexing) {
+      throw new Error("Cannot clear cache while indexing is in progress. Please wait for indexing to complete.");
+    }
+
+    // Check if cache is currently being saved (race condition prevention)
+    if (this.cache.isSaving) {
+      throw new Error("Cannot clear cache while cache is being saved. Please try again in a moment.");
+    }
+
+    // Check if a clear operation is already in progress (prevent concurrent clears)
+    if (this.isClearing) {
+      throw new Error("Cache clear operation already in progress. Please wait for it to complete.");
+    }
+
+    this.isClearing = true;
+
+    try {
+      await this.cache.clear();
+      return {
+        success: true,
+        message: `Cache cleared successfully. Next indexing will be a full rebuild.`,
+        cacheDirectory: this.config.cacheDirectory
+      };
+    } finally {
+      this.isClearing = false;
+    }
   }
 }
 
