@@ -18,6 +18,7 @@ export class CodebaseIndexer {
     this.watcher = null;
     this.workers = [];
     this.workerReady = [];
+    this.isIndexing = false;
   }
 
   /**
@@ -409,8 +410,22 @@ export class CodebaseIndexer {
     return filesToProcess;
   }
 
-  async indexAll() {
-    const totalStartTime = Date.now();
+  async indexAll(force = false) {
+    if (this.isIndexing) {
+      console.error("[Indexer] Indexing already in progress, skipping concurrent request");
+      return { skipped: true, reason: "Indexing already in progress" };
+    }
+
+    this.isIndexing = true;
+
+    try {
+      if (force) {
+        console.error("[Indexer] Force reindex requested: clearing cache");
+        this.cache.setVectorStore([]);
+        this.cache.fileHashes = new Map();
+      }
+
+      const totalStartTime = Date.now();
     console.error(`[Indexer] Starting optimized indexing in ${this.config.searchDirectory}...`);
     
     // Step 1: Fast file discovery with fdir
@@ -419,7 +434,7 @@ export class CodebaseIndexer {
     if (files.length === 0) {
       console.error("[Indexer] No files found to index");
       this.sendProgress(100, 100, "No files found to index");
-      return;
+      return { skipped: false, filesProcessed: 0, chunksCreated: 0, message: "No files found to index" };
     }
 
     // Send progress: discovery complete
@@ -432,7 +447,15 @@ export class CodebaseIndexer {
       console.error("[Indexer] All files unchanged, nothing to index");
       this.sendProgress(100, 100, "All files up to date");
       await this.cache.save();
-      return;
+      const vectorStore = this.cache.getVectorStore();
+      return { 
+        skipped: false, 
+        filesProcessed: 0, 
+        chunksCreated: 0, 
+        totalFiles: new Set(vectorStore.map(v => v.file)).size,
+        totalChunks: vectorStore.length,
+        message: "All files up to date" 
+      };
     }
 
     // Send progress: filtering complete
@@ -541,6 +564,20 @@ export class CodebaseIndexer {
     this.sendProgress(100, 100, `Complete: ${totalChunks} chunks from ${filesToProcess.length} files in ${totalTime}s`);
     
     await this.cache.save();
+    
+    const vectorStore = this.cache.getVectorStore();
+    return {
+      skipped: false,
+      filesProcessed: filesToProcess.length,
+      chunksCreated: totalChunks,
+      totalFiles: new Set(vectorStore.map(v => v.file)).size,
+      totalChunks: vectorStore.length,
+      duration: totalTime,
+      message: `Indexed ${filesToProcess.length} files (${totalChunks} chunks) in ${totalTime}s`
+    };
+    } finally {
+      this.isIndexing = false;
+    }
   }
 
   setupFileWatcher() {
@@ -608,25 +645,41 @@ export function getToolDefinition() {
 // Tool handler
 export async function handleToolCall(request, indexer) {
   const force = request.params.arguments?.force || false;
+  const result = await indexer.indexAll(force);
   
-  if (force) {
-    // Clear cache to force full reindex
-    indexer.cache.setVectorStore([]);
-    indexer.cache.fileHashes = new Map();
+  // Handle case when indexing was skipped due to concurrent request
+  if (result?.skipped) {
+    return {
+      content: [{
+        type: "text",
+        text: `Indexing skipped: ${result.reason}\n\nPlease wait for the current indexing operation to complete before requesting another reindex.`
+      }]
+    };
   }
   
-  await indexer.indexAll();
-  
+  // Get current stats from cache
   const vectorStore = indexer.cache.getVectorStore();
   const stats = {
-    totalChunks: vectorStore.length,
-    totalFiles: new Set(vectorStore.map(v => v.file)).size
+    totalChunks: result?.totalChunks ?? vectorStore.length,
+    totalFiles: result?.totalFiles ?? new Set(vectorStore.map(v => v.file)).size,
+    filesProcessed: result?.filesProcessed ?? 0,
+    chunksCreated: result?.chunksCreated ?? 0
   };
+  
+  let message = result?.message 
+    ? `Codebase reindexed successfully.\n\n${result.message}`
+    : `Codebase reindexed successfully.`;
+  
+  message += `\n\nStatistics:\n- Total files in index: ${stats.totalFiles}\n- Total code chunks: ${stats.totalChunks}`;
+  
+  if (stats.filesProcessed > 0) {
+    message += `\n- Files processed this run: ${stats.filesProcessed}\n- Chunks created this run: ${stats.chunksCreated}`;
+  }
   
   return {
     content: [{
       type: "text",
-      text: `Codebase reindexed successfully.\n\nStatistics:\n- Files indexed: ${stats.totalFiles}\n- Code chunks: ${stats.totalChunks}`
+      text: message
     }]
   };
 }
