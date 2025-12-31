@@ -72,46 +72,7 @@ Add to your MCP configuration file. The location depends on your IDE and OS:
 
 Add the server configuration to the `mcpServers` object in your config file:
 
-### Option 1: Auto-Detection (Recommended)
-
-By default, the server indexes the directory it is started in. Most clients start MCP servers in the workspace root automatically:
-
-```json
-{
-  "mcpServers": {
-    "smart-coding-mcp": {
-      "command": "smart-coding-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-For explicit workspace control, use the `${workspaceFolder}` variable:
-
-```json
-{
-  "mcpServers": {
-    "smart-coding-mcp": {
-      "command": "smart-coding-mcp",
-      "args": ["--workspace", "${workspaceFolder}"]
-    }
-  }
-}
-```
-
-**Client Compatibility:**
-
-| Client           | Supports `${workspaceFolder}` |
-| ---------------- | ----------------------------- |
-| VS Code          | Yes                           |
-| Cursor (Cascade) | Yes                           |
-| Antigravity      | Yes                           |
-| Claude Desktop   | No (use Option 2)             |
-
-### Option 2: Absolute Path (Claude Desktop)
-
-For clients that don't support dynamic variables:
+### Option 1: Absolute Path (Recommended)
 
 ```json
 {
@@ -124,7 +85,7 @@ For clients that don't support dynamic variables:
 }
 ```
 
-### Option 3: Multi-Project Support
+### Option 2: Multi-Project Support
 
 ```json
 {
@@ -140,6 +101,30 @@ For clients that don't support dynamic variables:
   }
 }
 ```
+
+### Option 3: Auto-Detection (May Not Work)
+
+> ⚠️ **Warning:** Most MCP clients (including Antigravity and Claude Desktop) do NOT support `${workspaceFolder}` variable expansion. The server will exit with an error if the variable is not expanded.
+
+For clients that support dynamic variables (VS Code, Cursor):
+
+```json
+{
+  "mcpServers": {
+    "smart-coding-mcp": {
+      "command": "smart-coding-mcp",
+      "args": ["--workspace", "${workspaceFolder}"]
+    }
+  }
+}
+```
+
+| Client           | Supports `${workspaceFolder}` |
+| ---------------- | ----------------------------- |
+| VS Code          | Yes                           |
+| Cursor (Cascade) | Yes                           |
+| Antigravity      | No ❌                         |
+| Claude Desktop   | No ❌                         |
 
 ## Environment Variables
 

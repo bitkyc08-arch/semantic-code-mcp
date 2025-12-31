@@ -81,8 +81,8 @@ describe('VersionChecker Complex Suite', () => {
       expect(checker._detectEcosystem("com.google:guava")).toBe("maven");
     });
 
-    it('should return null for unknown patterns', () => {
-      expect(checker._detectEcosystem("unknown-pkg")).toBeNull();
+    it('should default to npm for unknown patterns', () => {
+      expect(checker._detectEcosystem("unknown-pkg")).toBe("npm");
     });
   });
 

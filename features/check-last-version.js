@@ -8,14 +8,14 @@ export class VersionChecker {
   /**
    * Creates a new VersionChecker instance.
    * @param {Object} config - Configuration object
-   * @param {number} [config.versionCheckTimeout=5000] - Timeout for API requests in ms
+   * @param {number} [config.versionCheckTimeout=10000] - Timeout for API requests in ms
    * @param {number} [config.versionCacheTTL=300000] - Cache TTL in ms (default: 5 minutes)
    * @param {number} [config.retryAttempts=1] - Number of retry attempts for failed requests
    * @param {number} [config.retryDelay=500] - Delay between retries in ms
    */
   constructor(config) {
     this.config = config;
-    this.timeout = config.versionCheckTimeout || 5000;
+    this.timeout = config.versionCheckTimeout || 10000; // 10 seconds for slow APIs
     this.cacheTTL = config.versionCacheTTL || 300000; // 5 minutes
     this.retryAttempts = config.retryAttempts ?? 1;
     this.retryDelay = config.retryDelay || 500;
@@ -154,7 +154,8 @@ export class VersionChecker {
     // Check for Maven patterns last (generic colon for group:artifact or explicit mvn:)
     if (packageName.startsWith("mvn:") || packageName.includes(":")) return "maven";
     
-    return null;
+    // Default to npm for unprefixed package names (most common use case)
+    return "npm";
   }
 
   /**
