@@ -60,7 +60,10 @@
   "cacheDirectory": "./.smart-coding-cache",
   "watchFiles": false,
   "verbose": false,
-  "embeddingModel": "Xenova/all-MiniLM-L6-v2",
+  "embeddingModel": "nomic-ai/nomic-embed-text-v1.5",
+  "embeddingDimension": 256,
+  "device": "auto",
+  "chunkingMode": "smart",
   "semanticWeight": 0.7,
   "exactMatchBoost": 1.5,
   "workerThreads": "auto"
