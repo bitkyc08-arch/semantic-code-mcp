@@ -90,15 +90,27 @@ npm update -g smart-coding-mcp
 
 ## Configuration
 
-Add to your MCP configuration file. The location depends on your IDE and OS:
+## IDE Integration
 
-| IDE                  | OS      | Config Path                                                       |
-| -------------------- | ------- | ----------------------------------------------------------------- |
-| **Claude Desktop**   | macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| **Claude Desktop**   | Windows | `%APPDATA%\Claude\claude_desktop_config.json`                     |
-| **Cascade (Cursor)** | All     | Configured via UI Settings > Features > MCP                       |
-| **Antigravity**      | macOS   | `~/.gemini/antigravity/mcp_config.json`                           |
-| **Antigravity**      | Windows | `%USERPROFILE%\.gemini\antigravity\mcp_config.json`               |
+Detailed setup instructions for your preferred environment:
+
+| IDE / App          | Setup Guide                                        | Supported Variables  |
+| ------------------ | -------------------------------------------------- | -------------------- |
+| **VS Code**        | [**View Guide**](docs/ide-setup/vscode.md)         | `${workspaceFolder}` |
+| **Cursor**         | [**View Guide**](docs/ide-setup/cursor.md)         | `${workspaceFolder}` |
+| **Windsurf**       | [**View Guide**](docs/ide-setup/windsurf.md)       | Absolute paths only  |
+| **Claude Desktop** | [**View Guide**](docs/ide-setup/claude-desktop.md) | Absolute paths only  |
+| **Raycast**        | [**View Guide**](docs/ide-setup/raycast.md)        | Absolute paths only  |
+| **Antigravity**    | [**View Guide**](docs/ide-setup/antigravity.md)    | Absolute paths only  |
+
+### Common Configuration Paths
+
+| IDE                | OS      | Config Path                                                       |
+| ------------------ | ------- | ----------------------------------------------------------------- |
+| **Claude Desktop** | macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| **Claude Desktop** | Windows | `%APPDATA%\Claude\claude_desktop_config.json`                     |
+| **Windsurf**       | macOS   | `~/.codeium/windsurf/mcp_config.json`                             |
+| **Windsurf**       | Windows | `%USERPROFILE%\.codeium\windsurf\mcp_config.json`                 |
 
 Add the server configuration to the `mcpServers` object in your config file:
 
