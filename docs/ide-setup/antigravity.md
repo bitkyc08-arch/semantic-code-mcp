@@ -75,9 +75,10 @@ Antigravity supports powerful agent rules to control AI behavior.
    **Trigger:** When asking about "how" something works, finding logic, or understanding architecture.
    **Action:**
 
-   - **PREFER** `a_semantic_search` (Smart Coding) over `grep_search` or `find_by_name`.
-   - Use `a_semantic_search` for natural language queries (e.g., "where is the auth logic").
-   - Use standard tools (`grep`) only for exact string matching.
+   - **MUST** use `a_semantic_search` as the FIRST tool for any codebase research
+   - **DO NOT** use `Glob` or `Grep` for exploratory searches
+   - Use `Grep` ONLY for exact literal string matching (e.g., finding a specific error message)
+   - Use `Glob` ONLY when you already know the exact filename pattern
 
    ## 3. Environment & Status
 

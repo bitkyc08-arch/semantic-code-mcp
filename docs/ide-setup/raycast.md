@@ -70,9 +70,10 @@ Raycast uses **AI Commands** and **Presets** for custom instructions.
      - **DO NOT** use generic web search unless `d_check_last_version` fails.
 
      ## 2. Codebase Research
-     - **PREFER** `a_semantic_search` over `grep_search` or `find_by_name`.
-     - Use `a_semantic_search` for natural language queries (e.g., "where is the auth logic").
-     - Use standard tools (`grep`) only for exact string matching.
+     - **MUST** use `a_semantic_search` as the FIRST tool for any codebase research
+     - **DO NOT** use `Glob` or `Grep` for exploratory searches
+     - Use `Grep` ONLY for exact literal string matching (e.g., finding a specific error message)
+     - Use `Glob` ONLY when you already know the exact filename pattern
 
      ## 3. Environment & Status
      - Use `e_set_workspace` if the current workspace path is incorrect.
