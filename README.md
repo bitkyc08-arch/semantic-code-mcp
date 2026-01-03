@@ -5,18 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 
-An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Built with local AI models using Matryoshka Representation Learning (MRL) for flexible embedding dimensions (64-768d.
-
-### Available Tools
-
-| Tool                   | Description                                       | Example                                         |
-| ---------------------- | ------------------------------------------------- | ----------------------------------------------- |
-| `semantic_search`      | Find code by meaning, not just keywords           | `"Where do we validate user input?"`            |
-| `index_codebase`       | Manually trigger reindexing                       | Use after major refactoring or branch switches  |
-| `clear_cache`          | Reset the embeddings cache                        | Useful when cache becomes corrupted             |
-| `d_check_last_version` | Get latest version of any package (20 ecosystems) | `"express"`, `"npm:react"`, `"pip:requests"`    |
-| `e_set_workspace`      | Change project path at runtime                    | Switch to different project without restart     |
-| `f_get_status`         | Get server info: version, index status, config    | Check indexing progress, model info, cache size |
+An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Built with local AI models using Matryoshka Representation Learning (MRL) for flexible embedding dimensions (64-768d).
 
 ## What This Does
 
@@ -26,95 +15,139 @@ This MCP server solves that by indexing your codebase with AI embeddings. Your A
 
 ![Example](example.png)
 
-## Why Use This
+## Available Tools
 
-**Better Code Understanding**
+### 🔍 `a_semantic_search` - Find Code by Meaning
 
-- Search finds code by concept, not just matching words
-- Works with typos and variations in terminology
-- Natural language queries like "where do we validate user input?"
+The primary tool for codebase exploration. Uses AI embeddings to understand what you're looking for, not just match keywords.
 
-**Performance**
+**How it works:** Converts your natural language query into a vector, then finds code chunks with similar meaning using cosine similarity + exact match boosting.
 
-- Pre-indexed embeddings are faster than scanning files at runtime
-- Smart project detection skips dependencies automatically (node_modules, vendor, etc.)
-- Incremental updates - only re-processes changed files
+**Best for:**
+- Exploring unfamiliar codebases: `"How does authentication work?"`
+- Finding related code: `"Where do we validate user input?"`
+- Conceptual searches: `"error handling patterns"`
+- Works even with typos: `"embeding modle initializashun"` still finds embedding code
 
-**Privacy**
+**Example queries:**
+```
+"Where do we handle cache persistence?"
+"How is the database connection managed?"
+"Find all API endpoint definitions"
+```
 
-- Everything runs locally on your machine
-- Your code never leaves your system
-- No API calls to external services
+---
 
-## Performance & Resource Management
+### 📦 `d_check_last_version` - Package Version Lookup
 
-**Progressive Indexing**
+Fetches the latest version of any package from its official registry. Supports 20+ ecosystems.
 
-- Search works immediately, even while indexing continues (like video buffering)
-- Incremental saves every 5 batches - no data loss if interrupted
-- Real-time indexing status shown when searching during indexing
+**How it works:** Queries official package registries (npm, PyPI, Crates.io, etc.) in real-time. No guessing, no stale training data.
 
-**Resource Throttling**
+**Supported ecosystems:** npm, PyPI, Crates.io, Maven, Go, RubyGems, NuGet, Packagist, Hex, pub.dev, Homebrew, Conda, and more.
 
-- CPU usage limited to 50% by default (configurable)
-- Your laptop stays responsive during indexing
-- Configurable delays between batches
-- Worker thread limits respect system resources
+**Best for:**
+- Before adding dependencies: `"express"` → `4.18.2`
+- Checking for updates: `"pip:requests"` → `2.31.0`
+- Multi-ecosystem projects: `"npm:react"`, `"go:github.com/gin-gonic/gin"`
 
-**SQLite Cache**
+**Example usage:**
+```
+"What's the latest version of lodash?"
+"Check if there's a newer version of axios"
+```
 
-- 5-10x faster than JSON for large codebases
-- Write-Ahead Logging (WAL) for better concurrency
-- Binary blob storage for smaller cache size
-- Automatic migration from JSON
+---
 
-**Optimized Defaults**
+### 🔄 `b_index_codebase` - Manual Reindexing
 
-- 128d embeddings by default (2x faster than 256d, minimal quality loss)
-- Smart batch sizing based on project size
-- Parallel processing with auto-tuned worker threads
+Triggers a full reindex of your codebase. Normally not needed since indexing is automatic and incremental.
+
+**How it works:** Scans all files, generates new embeddings, and updates the SQLite cache. Uses progressive indexing so you can search while it runs.
+
+**When to use:**
+- After major refactoring or branch switches
+- After pulling large changes from remote
+- If search results seem stale or incomplete
+- After changing embedding configuration (dimension, model)
+
+---
+
+### 🗑️ `c_clear_cache` - Reset Everything
+
+Deletes the embeddings cache entirely, forcing a complete reindex on next search.
+
+**How it works:** Removes the `.smart-coding-cache/` directory. Next search or index operation starts fresh.
+
+**When to use:**
+- Cache corruption (rare, but possible)
+- Switching embedding models or dimensions
+- Starting fresh after major codebase restructure
+- Troubleshooting search issues
+
+---
+
+### 📂 `e_set_workspace` - Switch Projects
+
+Changes the workspace path at runtime without restarting the server.
+
+**How it works:** Updates the internal workspace reference, creates cache folder for new path, and optionally triggers reindexing.
+
+**When to use:**
+- Working on multiple projects in one session
+- Monorepo navigation between packages
+- Switching between related repositories
+
+---
+
+### ℹ️ `f_get_status` - Server Health Check
+
+Returns comprehensive status information about the MCP server.
+
+**What it shows:**
+- Server version and uptime
+- Workspace path and cache location
+- Indexing status (ready, indexing, percentage complete)
+- Files indexed and chunk count
+- Model configuration (name, dimension, device)
+- Cache size and type
+
+**When to use:**
+- Start of session to verify everything is working
+- Debugging connection or indexing issues
+- Checking indexing progress on large codebases
+
+---
 
 ## Installation
-
-Install globally via npm:
 
 ```bash
 npm install -g smart-coding-mcp
 ```
 
-To update to the latest version:
+To update:
 
 ```bash
 npm update -g smart-coding-mcp
 ```
 
-## Configuration
-
 ## IDE Integration
 
 Detailed setup instructions for your preferred environment:
 
-| IDE / App          | Setup Guide                                        | Supported Variables  |
-| ------------------ | -------------------------------------------------- | -------------------- |
-| **VS Code**        | [**View Guide**](docs/ide-setup/vscode.md)         | `${workspaceFolder}` |
-| **Cursor**         | [**View Guide**](docs/ide-setup/cursor.md)         | `${workspaceFolder}` |
-| **Windsurf**       | [**View Guide**](docs/ide-setup/windsurf.md)       | Absolute paths only  |
-| **Claude Desktop** | [**View Guide**](docs/ide-setup/claude-desktop.md) | Absolute paths only  |
-| **Raycast**        | [**View Guide**](docs/ide-setup/raycast.md)        | Absolute paths only  |
-| **Antigravity**    | [**View Guide**](docs/ide-setup/antigravity.md)    | Absolute paths only  |
+| IDE / App          | Setup Guide                                        | `${workspaceFolder}` Support |
+| ------------------ | -------------------------------------------------- | ---------------------------- |
+| **VS Code**        | [**View Guide**](docs/ide-setup/vscode.md)         | ✅ Yes                       |
+| **Cursor**         | [**View Guide**](docs/ide-setup/cursor.md)         | ✅ Yes                       |
+| **Windsurf**       | [**View Guide**](docs/ide-setup/windsurf.md)       | ❌ Absolute paths only       |
+| **Claude Desktop** | [**View Guide**](docs/ide-setup/claude-desktop.md) | ❌ Absolute paths only       |
+| **OpenCode**       | [**View Guide**](docs/ide-setup/opencode.md)       | ❌ Absolute paths only       |
+| **Raycast**        | [**View Guide**](docs/ide-setup/raycast.md)        | ❌ Absolute paths only       |
+| **Antigravity**    | [**View Guide**](docs/ide-setup/antigravity.md)    | ❌ Absolute paths only       |
 
-### Common Configuration Paths
+### Quick Setup
 
-| IDE                | OS      | Config Path                                                       |
-| ------------------ | ------- | ----------------------------------------------------------------- |
-| **Claude Desktop** | macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| **Claude Desktop** | Windows | `%APPDATA%\Claude\claude_desktop_config.json`                     |
-| **Windsurf**       | macOS   | `~/.codeium/windsurf/mcp_config.json`                             |
-| **Windsurf**       | Windows | `%USERPROFILE%\.codeium\windsurf\mcp_config.json`                 |
-
-Add the server configuration to the `mcpServers` object in your config file:
-
-### Option 1: Absolute Path (Recommended)
+Add to your MCP config file:
 
 ```json
 {
@@ -127,16 +160,27 @@ Add the server configuration to the `mcpServers` object in your config file:
 }
 ```
 
-### Option 2: Multi-Project Support
+### Config File Locations
+
+| IDE                | OS      | Path                                                              |
+| ------------------ | ------- | ----------------------------------------------------------------- |
+| **Claude Desktop** | macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| **Claude Desktop** | Windows | `%APPDATA%\Claude\claude_desktop_config.json`                     |
+| **OpenCode**       | Global  | `~/.config/opencode/opencode.json`                                |
+| **OpenCode**       | Project | `opencode.json` in project root                                   |
+| **Windsurf**       | macOS   | `~/.codeium/windsurf/mcp_config.json`                             |
+| **Windsurf**       | Windows | `%USERPROFILE%\.codeium\windsurf\mcp_config.json`                 |
+
+### Multi-Project Setup
 
 ```json
 {
   "mcpServers": {
-    "smart-coding-mcp-frontend": {
+    "smart-coding-frontend": {
       "command": "smart-coding-mcp",
       "args": ["--workspace", "/path/to/frontend"]
     },
-    "smart-coding-mcp-backend": {
+    "smart-coding-backend": {
       "command": "smart-coding-mcp",
       "args": ["--workspace", "/path/to/backend"]
     }
@@ -144,55 +188,27 @@ Add the server configuration to the `mcpServers` object in your config file:
 }
 ```
 
-### Option 3: Auto-Detection (May Not Work)
-
-> ⚠️ **Warning:** Most MCP clients (including Antigravity and Claude Desktop) do NOT support `${workspaceFolder}` variable expansion. The server will exit with an error if the variable is not expanded.
-
-For clients that support dynamic variables (VS Code, Cursor):
-
-```json
-{
-  "mcpServers": {
-    "smart-coding-mcp": {
-      "command": "smart-coding-mcp",
-      "args": ["--workspace", "${workspaceFolder}"]
-    }
-  }
-}
-```
-
-| Client           | Supports `${workspaceFolder}` |
-| ---------------- | ----------------------------- |
-| VS Code          | Yes                           |
-| Cursor (Cascade) | Yes                           |
-| Antigravity      | No ❌                         |
-| Claude Desktop   | No ❌                         |
-
 ## Environment Variables
 
-Override configuration settings via environment variables in your MCP config:
+Customize behavior via environment variables:
 
-| Variable                           | Type    | Default                          | Description                                |
-| ---------------------------------- | ------- | -------------------------------- | ------------------------------------------ |
-| `SMART_CODING_VERBOSE`             | boolean | `false`                          | Enable detailed logging                    |
-| `SMART_CODING_BATCH_SIZE`          | number  | `100`                            | Files to process in parallel               |
-| `SMART_CODING_MAX_FILE_SIZE`       | number  | `1048576`                        | Max file size in bytes (1MB)               |
-| `SMART_CODING_CHUNK_SIZE`          | number  | `25`                             | Lines of code per chunk                    |
-| `SMART_CODING_MAX_RESULTS`         | number  | `5`                              | Max search results                         |
-| `SMART_CODING_SMART_INDEXING`      | boolean | `true`                           | Enable smart project detection             |
-| `SMART_CODING_WATCH_FILES`         | boolean | `false`                          | Enable file watching for auto-reindex      |
-| `SMART_CODING_SEMANTIC_WEIGHT`     | number  | `0.7`                            | Weight for semantic similarity (0-1)       |
-| `SMART_CODING_EXACT_MATCH_BOOST`   | number  | `1.5`                            | Boost for exact text matches               |
-| `SMART_CODING_EMBEDDING_MODEL`     | string  | `nomic-ai/nomic-embed-text-v1.5` | AI embedding model to use                  |
-| `SMART_CODING_EMBEDDING_DIMENSION` | number  | `128`                            | MRL dimension (64, 128, 256, 512, 768)     |
-| `SMART_CODING_DEVICE`              | string  | `cpu`                            | Inference device (`cpu`, `webgpu`, `auto`) |
-| `SMART_CODING_CHUNKING_MODE`       | string  | `smart`                          | Code chunking (`smart`, `ast`, `line`)     |
-| `SMART_CODING_WORKER_THREADS`      | string  | `auto`                           | Worker threads (`auto` or 1-32)            |
-| `SMART_CODING_MAX_CPU_PERCENT`     | number  | `50`                             | Max CPU usage during indexing (10-100%)    |
-| `SMART_CODING_BATCH_DELAY`         | number  | `100`                            | Delay between batches in ms (0-5000)       |
-| `SMART_CODING_MAX_WORKERS`         | string  | `auto`                           | Override max worker threads limit          |
+| Variable                           | Default                          | Description                                |
+| ---------------------------------- | -------------------------------- | ------------------------------------------ |
+| `SMART_CODING_VERBOSE`             | `false`                          | Enable detailed logging                    |
+| `SMART_CODING_MAX_RESULTS`         | `5`                              | Max search results returned                |
+| `SMART_CODING_BATCH_SIZE`          | `100`                            | Files to process in parallel               |
+| `SMART_CODING_MAX_FILE_SIZE`       | `1048576`                        | Max file size in bytes (1MB)               |
+| `SMART_CODING_CHUNK_SIZE`          | `25`                             | Lines of code per chunk                    |
+| `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | MRL dimension (64, 128, 256, 512, 768)     |
+| `SMART_CODING_EMBEDDING_MODEL`     | `nomic-ai/nomic-embed-text-v1.5` | AI embedding model                         |
+| `SMART_CODING_DEVICE`              | `cpu`                            | Inference device (`cpu`, `webgpu`, `auto`) |
+| `SMART_CODING_SEMANTIC_WEIGHT`     | `0.7`                            | Weight for semantic vs exact matching      |
+| `SMART_CODING_EXACT_MATCH_BOOST`   | `1.5`                            | Boost multiplier for exact text matches    |
+| `SMART_CODING_MAX_CPU_PERCENT`     | `50`                             | Max CPU usage during indexing (10-100%)    |
+| `SMART_CODING_CHUNKING_MODE`       | `smart`                          | Code chunking (`smart`, `ast`, `line`)     |
+| `SMART_CODING_WATCH_FILES`         | `false`                          | Auto-reindex on file changes               |
 
-**Example with environment variables:**
+**Example with env vars:**
 
 ```json
 {
@@ -202,15 +218,25 @@ Override configuration settings via environment variables in your MCP config:
       "args": ["--workspace", "/path/to/project"],
       "env": {
         "SMART_CODING_VERBOSE": "true",
-        "SMART_CODING_BATCH_SIZE": "200",
-        "SMART_CODING_MAX_FILE_SIZE": "2097152"
+        "SMART_CODING_MAX_RESULTS": "10",
+        "SMART_CODING_EMBEDDING_DIMENSION": "256"
       }
     }
   }
 }
 ```
 
-**Note**: The server starts instantly and indexes in the background, so your IDE won't be blocked waiting for indexing to complete.
+## Performance
+
+**Progressive Indexing** - Search works immediately while indexing continues in the background. No waiting for large codebases.
+
+**Resource Throttling** - CPU limited to 50% by default. Your machine stays responsive during indexing.
+
+**SQLite Cache** - 5-10x faster than JSON. Automatic migration from older JSON caches.
+
+**Incremental Updates** - Only changed files are re-indexed. Saves every 5 batches, so no data loss if interrupted.
+
+**Optimized Defaults** - 128d embeddings (2x faster than 256d with minimal quality loss), smart batch sizing, parallel processing.
 
 ## How It Works
 
@@ -277,97 +303,23 @@ flowchart TB
 | **Inference** | transformers.js + ONNX Runtime        |
 | **Chunking**  | Smart regex / Tree-sitter AST         |
 | **Search**    | Cosine similarity + exact match boost |
-
-### Search Flow
-
-Query → Vector embedding → Cosine similarity → Ranked results
-
-## Examples
-
-**Natural language search:**
-
-Query: "How do we handle cache persistence?"
-
-Result:
-
-```javascript
-// lib/cache.js (Relevance: 38.2%)
-async save() {
-  await fs.writeFile(cacheFile, JSON.stringify(this.vectorStore));
-  await fs.writeFile(hashFile, JSON.stringify(this.fileHashes));
-}
-```
-
-**Typo tolerance:**
-
-Query: "embeding modle initializashun"
-
-Still finds embedding model initialization code despite multiple typos.
-
-**Conceptual search:**
-
-Query: "error handling and exceptions"
-
-Finds all try/catch blocks and error handling patterns.
+| **Cache**     | SQLite with WAL mode                  |
 
 ## Privacy
 
-- AI model runs entirely on your machine
-- No network requests to external services
+Everything runs **100% locally**:
+
+- AI model runs on your machine (no API calls)
+- Code never leaves your system
 - No telemetry or analytics
-- Cache stored locally in `.smart-coding-cache/`
-
-## Technical Details
-
-**Embedding Model**: nomic-embed-text-v1.5 via transformers.js v3
-
-- Matryoshka Representation Learning (MRL) for flexible dimensions
-- Configurable output: 64, 128, 256, 512, or 768 dimensions
-- Longer context (8192 tokens vs 256 for MiniLM)
-- Better code understanding through specialized training
-- WebGPU support for up to 100x faster inference (when available)
-
-**Legacy Model**: all-MiniLM-L6-v2 (fallback)
-
-- Fast inference, small footprint (~100MB)
-- Fixed 384-dimensional output
-
-**Vector Similarity**: Cosine similarity
-
-- Efficient comparison of embeddings
-- Normalized vectors for consistent scoring
-
-**Hybrid Scoring**: Combines semantic similarity with exact text matching
-
-- Semantic weight: 0.7 (configurable)
-- Exact match boost: 1.5x (configurable)
+- Cache stored in `.smart-coding-cache/`
 
 ## Research Background
 
-This project builds on research from Cursor showing that semantic search improves AI coding agent performance by 12.5% on average across question-answering tasks. The key insight is that AI assistants benefit more from relevant context than from large amounts of context.
-
-See: https://cursor.com/blog/semsearch
+This project builds on [research from Cursor](https://cursor.com/blog/semsearch) showing that semantic search improves AI coding agent performance by 12.5% on average. The key insight: AI assistants benefit more from **relevant** context than from **large amounts** of context.
 
 ## License
 
-MIT License
+MIT License - Copyright (c) 2025 Omar Haris
 
-Copyright (c) 2025 Omar Haris
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+See [LICENSE](LICENSE) for full text.
