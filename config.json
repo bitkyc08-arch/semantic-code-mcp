@@ -68,5 +68,6 @@
   "exactMatchBoost": 1.5,
   "workerThreads": "auto",
   "maxCpuPercent": 50,
-  "batchDelay": 100
+  "batchDelay": 100,
+  "autoIndexDelay": 5000
 }

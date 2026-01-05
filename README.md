@@ -207,6 +207,7 @@ Customize behavior via environment variables:
 | `SMART_CODING_MAX_CPU_PERCENT`     | `50`                             | Max CPU usage during indexing (10-100%)    |
 | `SMART_CODING_CHUNKING_MODE`       | `smart`                          | Code chunking (`smart`, `ast`, `line`)     |
 | `SMART_CODING_WATCH_FILES`         | `false`                          | Auto-reindex on file changes               |
+| `SMART_CODING_AUTO_INDEX_DELAY`    | `5000`                           | Delay before background indexing (ms), `false` to disable |
 
 **Example with env vars:**
 
