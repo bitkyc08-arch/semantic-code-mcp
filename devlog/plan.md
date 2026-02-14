@@ -134,9 +134,9 @@
 
 ### 검증
 
-- [ ] index/search/clear smoke test
-- [ ] 증분 인덱싱 회귀 테스트
-- [ ] 결과 포맷 호환성 확인
+- [x] index/search/clear smoke test
+- [x] 증분 인덱싱 회귀 테스트
+- [x] 결과 포맷 호환성 확인
 
 ---
 
