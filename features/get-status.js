@@ -44,6 +44,7 @@ export class StatusReporter {
    */
   async getStatus() {
     const vectorStore = this.cache?.getVectorStore() || [];
+    const vectorStoreProvider = (this.config.vectorStoreProvider || 'sqlite').toLowerCase();
     
     // Get unique files from vector store
     const uniqueFiles = new Set(vectorStore.map(v => v.file));
@@ -51,22 +52,26 @@ export class StatusReporter {
     // Get cache size (check for SQLite database)
     let cacheSizeBytes = 0;
     let cacheType = 'none';
-    try {
-      // Check for SQLite cache first
-      const sqlitePath = path.join(this.config.cacheDirectory, 'embeddings.db');
-      const stats = await fs.stat(sqlitePath);
-      cacheSizeBytes = stats.size;
-      cacheType = 'sqlite';
-    } catch {
-      // Try old JSON cache as fallback
+    if (vectorStoreProvider === 'milvus') {
+      cacheType = 'milvus';
+    } else {
       try {
-        const jsonPath = path.join(this.config.cacheDirectory, 'embeddings.json');
-        const stats = await fs.stat(jsonPath);
+        // Check for SQLite cache first
+        const sqlitePath = path.join(this.config.cacheDirectory, 'embeddings.db');
+        const stats = await fs.stat(sqlitePath);
         cacheSizeBytes = stats.size;
-        cacheType = 'json';
+        cacheType = 'sqlite';
       } catch {
-        // No cache file exists
-        cacheType = 'none';
+        // Try old JSON cache as fallback
+        try {
+          const jsonPath = path.join(this.config.cacheDirectory, 'embeddings.json');
+          const stats = await fs.stat(jsonPath);
+          cacheSizeBytes = stats.size;
+          cacheType = 'json';
+        } catch {
+          // No cache file exists
+          cacheType = 'none';
+        }
       }
     }
 
@@ -124,7 +129,7 @@ export class StatusReporter {
       cache: {
         enabled: this.config.enableCache,
         type: cacheType,
-        path: this.config.cacheDirectory,
+        path: cacheType === 'milvus' ? this.config.milvusAddress : this.config.cacheDirectory,
         sizeBytes: cacheSizeBytes,
         sizeFormatted: formatBytes(cacheSizeBytes)
       },
@@ -135,7 +140,8 @@ export class StatusReporter {
         semanticWeight: this.config.semanticWeight,
         exactMatchBoost: this.config.exactMatchBoost,
         workerThreads: this.config.workerThreads,
-        embeddingProvider: this.config.embeddingProvider
+        embeddingProvider: this.config.embeddingProvider,
+        vectorStoreProvider
       },
       
       resourceThrottling: {

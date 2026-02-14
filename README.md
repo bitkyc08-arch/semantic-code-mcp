@@ -63,7 +63,7 @@ Fetches the latest version of any package from its official registry. Supports 2
 
 Triggers a full reindex of your codebase. Normally not needed since indexing is automatic and incremental.
 
-**How it works:** Scans all files, generates new embeddings, and updates the SQLite cache. Uses progressive indexing so you can search while it runs.
+**How it works:** Scans all files, generates new embeddings, and updates the configured vector store cache (SQLite or Milvus). Uses progressive indexing so you can search while it runs.
 
 **When to use:**
 - After major refactoring or branch switches
@@ -77,7 +77,7 @@ Triggers a full reindex of your codebase. Normally not needed since indexing is 
 
 Deletes the embeddings cache entirely, forcing a complete reindex on next search.
 
-**How it works:** Removes the `.smart-coding-cache/` directory. Next search or index operation starts fresh.
+**How it works:** Clears the active cache backend. SQLite mode removes `.smart-coding-cache/`; Milvus mode clears the configured collection and local file-hash tracking.
 
 **When to use:**
 - Cache corruption (rare, but possible)
@@ -199,6 +199,11 @@ Customize behavior via environment variables:
 | `SMART_CODING_BATCH_SIZE`          | `100`                            | Files to process in parallel               |
 | `SMART_CODING_MAX_FILE_SIZE`       | `1048576`                        | Max file size in bytes (1MB)               |
 | `SMART_CODING_CHUNK_SIZE`          | `25`                             | Lines of code per chunk                    |
+| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                       | Vector store provider (`sqlite`, `milvus`) |
+| `SMART_CODING_MILVUS_ADDRESS`      | ``                               | Milvus endpoint (required when provider is `milvus`) |
+| `SMART_CODING_MILVUS_TOKEN`        | ``                               | Milvus token (optional; e.g. `username:password`) |
+| `SMART_CODING_MILVUS_DATABASE`     | `default`                        | Milvus database name                        |
+| `SMART_CODING_MILVUS_COLLECTION`   | `smart_coding_embeddings`        | Milvus collection name                      |
 | `SMART_CODING_EMBEDDING_PROVIDER`  | `local`                          | Embedding provider (`local`, `gemini`)      |
 | `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | Local MRL dimension (64, 128, 256, 512, 768) |
 | `SMART_CODING_EMBEDDING_MODEL`     | `nomic-ai/nomic-embed-text-v1.5` | AI embedding model                         |
@@ -243,7 +248,7 @@ Customize behavior via environment variables:
 
 **Resource Throttling** - CPU limited to 50% by default. Your machine stays responsive during indexing.
 
-**SQLite Cache** - 5-10x faster than JSON. Automatic migration from older JSON caches.
+**Vector Store Cache** - SQLite (default) or Milvus provider. Both keep incremental file-hash tracking for fast reindex decisions.
 
 **Incremental Updates** - Only changed files are re-indexed. Saves every 5 batches, so no data loss if interrupted.
 
@@ -282,7 +287,7 @@ flowchart TB
     end
 
     subgraph Storage["Cache"]
-        Vectors["SQLite Database<br/>embeddings.db (WAL mode)"]
+        Vectors["Vector Store<br/>SQLite (embeddings.db) or Milvus collection"]
         Hashes["File Hashes<br/>Incremental updates"]
         Progressive["Progressive Indexing<br/>Search works during indexing"]
     end
@@ -314,7 +319,7 @@ flowchart TB
 | **Inference** | transformers.js + ONNX Runtime        |
 | **Chunking**  | Smart regex / Tree-sitter AST         |
 | **Search**    | Cosine similarity + exact match boost |
-| **Cache**     | SQLite with WAL mode                  |
+| **Cache**     | SQLite (WAL) or Milvus provider       |
 
 ## Privacy
 

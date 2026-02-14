@@ -126,6 +126,46 @@ describe('Device Detection', () => {
     });
   });
 
+  describe('Vector Store Provider Config', () => {
+    it('should default to sqlite provider', () => {
+      expect(DEFAULT_CONFIG.vectorStoreProvider).toBe('sqlite');
+    });
+
+    it('should accept milvus provider from env', async () => {
+      process.env.SMART_CODING_VECTOR_STORE_PROVIDER = 'milvus';
+      const config = await loadConfig();
+      expect(config.vectorStoreProvider).toBe('milvus');
+    });
+
+    it('should reject invalid vector store provider values', async () => {
+      process.env.SMART_CODING_VECTOR_STORE_PROVIDER = 'invalid';
+      const config = await loadConfig();
+      expect(config.vectorStoreProvider).toBe(DEFAULT_CONFIG.vectorStoreProvider);
+    });
+  });
+
+  describe('Milvus Config', () => {
+    it('should load Milvus address from env', async () => {
+      process.env.SMART_CODING_MILVUS_ADDRESS = 'https://milvus.example.com:19530';
+      const config = await loadConfig();
+      expect(config.milvusAddress).toBe('https://milvus.example.com:19530');
+    });
+
+    it('should load Milvus token from env', async () => {
+      process.env.SMART_CODING_MILVUS_TOKEN = 'milvus-token';
+      const config = await loadConfig();
+      expect(config.milvusToken).toBe('milvus-token');
+    });
+
+    it('should load Milvus database and collection from env', async () => {
+      process.env.SMART_CODING_MILVUS_DATABASE = 'coding';
+      process.env.SMART_CODING_MILVUS_COLLECTION = 'embeddings_v2';
+      const config = await loadConfig();
+      expect(config.milvusDatabase).toBe('coding');
+      expect(config.milvusCollection).toBe('embeddings_v2');
+    });
+  });
+
   describe('Gemini Config', () => {
     it('should load Gemini API key from env', async () => {
       process.env.SMART_CODING_GEMINI_API_KEY = 'test-key';

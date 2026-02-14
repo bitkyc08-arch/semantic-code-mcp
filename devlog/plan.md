@@ -220,3 +220,10 @@ YYYY-MM-DD HH:mm | phase | change | result | next
 - 2026-02-14 20:27 | phase0 | 비임베딩 테스트 2건 기대치 정렬(`better-sqlite3`, `device-detection`) | Node v22 환경 및 현재 default config 기준으로 재검증 성공 | Phase 1 준비 상태 확정
 - 2026-02-14 20:34 | phase1 | Gemini embedder + config/env + worker 전달 경로 구현 | `embeddingProvider=gemini` 진입 경로 완성, worker는 safe mode 단일 스레드 정책 적용 | 문서/테스트 반영 후 커밋
 - 2026-02-14 20:34 | phase1 | 모킹 기반 검증(`gemini-embedder`, `device-detection` 확장) + 회귀셋 실행 | 6 test files, 154 tests 통과. Gemini provider 서버 부팅 스모크 정상 | submodule/parent 커밋 진행
+- 2026-02-14 20:42 | phase2-plan | `devlog/phase2-plan.md` 보강 (Phase 2-0 무임베딩 경로, 세부 TODO, 스니펫) | Milvus A 실행 순서와 검증 게이트 고정 | phase2 구현 착수
+- 2026-02-14 20:43 | phase2-baseline | Gemini API 실호출(`createGeminiEmbedder`) 단건/2건 배치 확인 | model `gemini-embedding-001`, 768d x2, elapsed 약 489ms | phase2-plan을 실호출 기준으로 재작성
+- 2026-02-14 20:50 | phase2-p2-1 | `vectorStoreProvider` 설정, `cache-factory`, `index.js` 캐시 DI 반영 + `set-workspace/get-status` 계약 정리 | `cache-factory`/`device-detection` 테스트 31건 통과, sqlite/milvus 부팅 스모크 확인 | P2-2 Milvus 실저장소 구현
+- 2026-02-14 20:59 | phase2-p2-2 | `lib/milvus-cache.js` 실구현 + `index-codebase/set-workspace` reset 계약 추가 + `@zilliz/milvus2-sdk-node` 의존성 반영 | Milvus load/insert/delete/save 스모크 통과, 관련 테스트 34건 통과 | P2-4 통합 인덱싱 검증
+- 2026-02-14 21:00 | phase2-gemini-e2e | `embeddingProvider=gemini + vectorStoreProvider=milvus` 조합으로 실임베딩+실저장소 smoke 실행 | `gemini-embedding-001`, 768d, Milvus insert/delete/save 성공 | Gemini 기준으로 P2-4 진행
+- 2026-02-14 21:03 | phase2-p2-4 | Gemini+Milvus로 임시 워크스페이스(2 files) `indexAll(true)` + `search(\"login authentication\")` 통합 실행 | 인덱싱 2 files/2 chunks, 검색 top 결과 `auth.js` 확인 | P2-5 부하/재시도 검증
+- 2026-02-14 21:07 | phase2-p2-5 | `gemini-embedder` 재시도 검증(429, 네트워크 예외, 동시 배치 부하, 400 비재시도) 테스트 추가 및 로직 보정 | 관련 테스트 16건 통과, live Gemini 768d 스모크 재확인 | 커밋 후 Codex config.toml 실사용 테스트

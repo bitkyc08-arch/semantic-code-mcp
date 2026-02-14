@@ -547,8 +547,12 @@ export class CodebaseIndexer {
     try {
       if (force) {
         console.error("[Indexer] Force reindex requested: clearing cache");
-        this.cache.setVectorStore([]);
-        this.cache.clearAllFileHashes();
+        if (typeof this.cache.resetForFullReindex === "function") {
+          await this.cache.resetForFullReindex();
+        } else {
+          this.cache.setVectorStore([]);
+          this.cache.clearAllFileHashes();
+        }
       }
 
       const totalStartTime = Date.now();

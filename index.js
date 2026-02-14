@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const packageJson = require("./package.json");
 
 import { loadConfig } from "./lib/config.js";
-import { SQLiteCache } from "./lib/sqlite-cache.js";
+import { createCache } from "./lib/cache-factory.js";
 import { createEmbedder } from "./lib/mrl-embedder.js";
 import { CodebaseIndexer } from "./features/index-codebase.js";
 import { HybridSearch } from "./features/hybrid-search.js";
@@ -129,8 +129,8 @@ async function ensureInitialized() {
       `[Server] Model: ${embedder.modelName} (${embedder.dimension}d, device: ${embedder.device})`
     );
 
-    // Initialize cache
-    cache = new SQLiteCache(config);
+    // Initialize cache (sqlite or milvus)
+    cache = createCache(config);
     await cache.load();
 
     // Initialize features

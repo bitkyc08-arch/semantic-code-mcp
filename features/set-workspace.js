@@ -86,8 +86,12 @@ export class WorkspaceManager {
 
     // Clear cache if requested
     if (clearCache && this.cache) {
-      this.cache.setVectorStore([]);
-      this.cache.fileHashes = new Map();
+      if (typeof this.cache.resetForFullReindex === "function") {
+        await this.cache.resetForFullReindex();
+      } else {
+        this.cache.setVectorStore([]);
+        this.cache.clearAllFileHashes();
+      }
       console.error(`[Workspace] Cache cleared for new workspace`);
     }
 

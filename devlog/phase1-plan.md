@@ -197,3 +197,6 @@ YYYY-MM-DD HH:mm | phase | file | change | result | next
   - `features/get-status.js`에 provider-aware model metadata 추가
   - `README.md`, `config.json` 업데이트
   - 검증: `vitest` 6 files / 154 tests 통과, `SMART_CODING_EMBEDDING_PROVIDER=gemini` 서버 부팅 스모크 통과
+- 2026-02-14 20:43 | phase1 | Gemini 실호출 기준선 추가 검증
+  - 실행: `createGeminiEmbedder()`로 단건/2건 배치 호출
+  - 결과: `gemini-embedding-001`, 768d 반환 확인(2건 모두), 호출 지연 약 489ms
