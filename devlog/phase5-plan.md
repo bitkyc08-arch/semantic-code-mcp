@@ -56,6 +56,15 @@
 - [x] 검증: `targetTokens=1740`, `overlapTokens=313` (기존 fallback 256 → 2048으로 변경)
 - [x] 효과: 청크 수 대폭 감소 (예: 7파일 206청크 → 재인덱싱 시 확인)
 
+### P5-6: markdown-rag 병렬 배치 임베딩
+- [x] `server.py`: `ThreadPoolExecutor` 기반 병렬 배치 실행 구현
+- [x] `server.py`: `EMBEDDING_CONCURRENT_BATCHES` env 추가 (기본 4)
+- [x] `server.py`: `EMBEDDING_BATCH_SIZE` 기본값 100→250 (Vertex API 최대)
+- [x] `server.py`: `MARKDOWN_CHUNK_SIZE` 기본값 512→2048
+- [x] 검증: 548파일, 6537청크, 51.8초 (250/batch × 4병렬)
+- [x] 전역 MCP 설정 7곳 일괄 반영 (codex, antigravity, claude, copilot, vscode, bootstrap ×2)
+- [x] `.vscode/mcp.json` Gemini→Vertex provider 전환
+
 ---
 
 ## 수정 파일 목록
@@ -120,11 +129,11 @@
 
 ### Vertex 병렬 워커
 
-| 항목              | 변경 전                      | 변경 후                 |
-| ----------------- | ---------------------------- | ----------------------- |
-| API provider 워커 | ❌ 비활성화 (single-thread)   | ✅ 50 workers            |
-| CPU 코어 상한     | `Math.min(parsed, cpuCount)` | `Math.max(1, parsed)`   |
-| 타임아웃 리스크   | ⚠️ 60초 초과                  | ✅ 병렬 처리로 개선 예상 |
+| 항목              | 변경 전                      | 변경 후                                                    |
+| ----------------- | ---------------------------- | ---------------------------------------------------------- |
+| API provider 워커 | ❌ 비활성화 (single-thread)   | ✅ 50 workers (스마트코딩), 4 concurrent batches (마크다운) |
+| CPU 코어 상한     | `Math.min(parsed, cpuCount)` | `Math.max(1, parsed)`                                      |
+| 타임아웃 리스크   | ⚠️ 60초 초과                  | ✅ 병렬 처리로 개선                                         |
 
 ---
 
@@ -155,3 +164,4 @@
 ## 변경 기록
 
 - 2026-02-15: Phase 5 상세 계획 생성. Multi-Provider + Vertex native + 병렬 워커 구현 완료.
+- 2026-02-15: P5-6 markdown-rag 병렬 배치 추가. ThreadPoolExecutor 기반 4-병렬, 250/batch. 실측: 548파일, 6537청크, 51.8초. 전역 설정 7곳 동기화.
