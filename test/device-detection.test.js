@@ -19,8 +19,8 @@ describe('Device Detection', () => {
   });
 
   describe('Default Configuration', () => {
-    it('should default to cpu device', () => {
-      expect(DEFAULT_CONFIG.device).toBe('cpu');
+    it('should default to auto device', () => {
+      expect(DEFAULT_CONFIG.device).toBe('auto');
     });
 
     it('should have valid device options', () => {
@@ -63,8 +63,8 @@ describe('Device Detection', () => {
   });
 
   describe('Embedding Dimension Config', () => {
-    it('should default to 256 dimensions', () => {
-      expect(DEFAULT_CONFIG.embeddingDimension).toBe(256);
+    it('should default to 128 dimensions', () => {
+      expect(DEFAULT_CONFIG.embeddingDimension).toBe(128);
     });
 
     it('should accept valid dimensions from env', async () => {
@@ -105,6 +105,60 @@ describe('Device Detection', () => {
       process.env.SMART_CODING_CHUNKING_MODE = 'invalid';
       const config = await loadConfig();
       expect(config.chunkingMode).toBe(DEFAULT_CONFIG.chunkingMode);
+    });
+  });
+
+  describe('Embedding Provider Config', () => {
+    it('should default to local provider', () => {
+      expect(DEFAULT_CONFIG.embeddingProvider).toBe('local');
+    });
+
+    it('should accept gemini provider from env', async () => {
+      process.env.SMART_CODING_EMBEDDING_PROVIDER = 'gemini';
+      const config = await loadConfig();
+      expect(config.embeddingProvider).toBe('gemini');
+    });
+
+    it('should reject invalid provider values', async () => {
+      process.env.SMART_CODING_EMBEDDING_PROVIDER = 'invalid';
+      const config = await loadConfig();
+      expect(config.embeddingProvider).toBe(DEFAULT_CONFIG.embeddingProvider);
+    });
+  });
+
+  describe('Gemini Config', () => {
+    it('should load Gemini API key from env', async () => {
+      process.env.SMART_CODING_GEMINI_API_KEY = 'test-key';
+      const config = await loadConfig();
+      expect(config.geminiApiKey).toBe('test-key');
+    });
+
+    it('should load Gemini model from env', async () => {
+      process.env.SMART_CODING_GEMINI_MODEL = 'text-embedding-004';
+      const config = await loadConfig();
+      expect(config.geminiModel).toBe('text-embedding-004');
+    });
+
+    it('should load Gemini base URL from env', async () => {
+      process.env.SMART_CODING_GEMINI_BASE_URL = 'https://example.test/openai';
+      const config = await loadConfig();
+      expect(config.geminiBaseURL).toBe('https://example.test/openai');
+    });
+
+    it('should parse Gemini dimensions from env', async () => {
+      process.env.SMART_CODING_GEMINI_DIMENSIONS = '1024';
+      const config = await loadConfig();
+      expect(config.geminiDimensions).toBe(1024);
+    });
+
+    it('should parse Gemini batching and retry settings from env', async () => {
+      process.env.SMART_CODING_GEMINI_BATCH_SIZE = '16';
+      process.env.SMART_CODING_GEMINI_BATCH_FLUSH_MS = '25';
+      process.env.SMART_CODING_GEMINI_MAX_RETRIES = '4';
+      const config = await loadConfig();
+      expect(config.geminiBatchSize).toBe(16);
+      expect(config.geminiBatchFlushMs).toBe(25);
+      expect(config.geminiMaxRetries).toBe(4);
     });
   });
 });

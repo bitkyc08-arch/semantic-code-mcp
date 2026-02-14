@@ -188,3 +188,12 @@ YYYY-MM-DD HH:mm | phase | file | change | result | next
 ## 변경 기록
 
 - 2026-02-14: `phase1-plan.md` 신규 작성. 코드베이스 검토 스니펫과 Phase 1 검증 기준 추가.
+- 2026-02-14 20:34 | phase1 | 구현 완료
+  - `lib/gemini-embedder.js` 신규 추가 (micro-batch + retry + OpenAI-compatible Gemini endpoint)
+  - `lib/mrl-embedder.js`에 `embeddingProvider=gemini` 분기 추가
+  - `lib/embedding-worker.js`에 Gemini 분기 및 공통 embedder 재사용
+  - `features/index-codebase.js` workerData에 Gemini 설정 전달 + Gemini safe mode(단일 스레드)
+  - `lib/config.js`에 `SMART_CODING_EMBEDDING_PROVIDER`, `SMART_CODING_GEMINI_*` env 처리 추가
+  - `features/get-status.js`에 provider-aware model metadata 추가
+  - `README.md`, `config.json` 업데이트
+  - 검증: `vitest` 6 files / 154 tests 통과, `SMART_CODING_EMBEDDING_PROVIDER=gemini` 서버 부팅 스모크 통과

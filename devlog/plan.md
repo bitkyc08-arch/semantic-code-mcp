@@ -41,6 +41,50 @@
 - 성능/품질 비교용 기준 쿼리 세트 확정
 - 실패 시 롤백 가능한 최소 지점 태깅
 
+#### Phase 0 실행 상태 (임베딩 미호출 기준)
+
+- [x] 런타임/브랜치 베이스라인 캡처
+  - Node `v22.18.0`, npm `10.9.3`
+  - submodule HEAD `f5bd732` (`agent`)
+- [x] 서버 부팅 스모크 (임베딩 lazy load + auto-index 비활성)
+  - 실행: `SMART_CODING_AUTO_INDEX_DELAY=false SMART_CODING_WATCH_FILES=false SMART_CODING_DEVICE=cpu node index.js --workspace "$PWD"`
+  - 결과: `Model will load on first use (lazy initialization)` 확인, 프로세스 정상 기동/종료
+- [x] 비임베딩 테스트셋 실행
+  - 통과: `test/ast-chunker.test.js`, `test/tokenizer.test.js`, `test/check-last-version.test.js`
+  - 초기 실패(환경/스펙 불일치) 2건 정리 완료:
+    - `test/better-sqlite3.test.js`의 Node 버전 기대치를 `v25` 고정에서 `>=18` 검증으로 수정
+    - `test/device-detection.test.js` 기본값 기대치를 현재 코드 기본값(`auto`, `128`)으로 정렬
+  - 재검증: `ast-chunker`, `tokenizer`, `check-last-version`, `better-sqlite3`, `device-detection` 총 141 tests 통과
+- [x] 기준 쿼리 세트 확정 (Phase 1 직전)
+- [x] 롤백 태그 전략 확정 (실행은 user 요청 시)
+
+#### 기준 쿼리 세트 v0 (A/B 비교 공용)
+
+아래 쿼리는 Phase 1 이후 동일하게 반복 실행해, 결과 품질과 지연을 비교한다.
+
+1. `incremental indexing file hash mtime`
+2. `clear cache while indexing is in progress`
+3. `auto index delay environment variable`
+4. `embedding worker thread initialization`
+5. `sqlite cache remove file from store`
+6. `hybrid search exact match boost`
+7. `device and embedding dimension defaults`
+8. `check latest package version tool handler`
+9. `AST chunker fallback to smart chunking`
+10. `config override SMART_CODING_* env parsing`
+
+#### 롤백 태그 전략 (실행 보류)
+
+실제 태그 생성은 사용자 요청 시에만 수행하고, Phase 0에서는 명령 표준만 고정한다.
+
+- submodule (`700_projects/smart-coding-mcp`)
+  - `git tag -a phase0-baseline-smart-coding-f5bd732 -m "[agent] chore: phase0 baseline"`
+- parent repo (`new`)
+  - submodule ref 커밋 이후 `git tag -a phase0-baseline-parent-<sha> -m "[agent] chore: phase0 baseline parent"`
+- 롤백 기준
+  - Phase 1에서 회귀 발견 시 submodule 태그로 즉시 복귀 검토
+  - parent는 submodule ref 기준으로 동기 복귀
+
 ### Phase 1. Gemini 이식
 
 - `lib/gemini-embedder.js` 신규
@@ -75,11 +119,11 @@
 
 ### Gemini
 
-- [ ] `lib/gemini-embedder.js` 작성
-- [ ] `lib/mrl-embedder.js`에 `embeddingProvider=gemini` 분기
-- [ ] `lib/embedding-worker.js`에 동일 분기 추가
-- [ ] `package.json` 의존성 추가
-- [ ] `lib/config.js` env 키 추가
+- [x] `lib/gemini-embedder.js` 작성
+- [x] `lib/mrl-embedder.js`에 `embeddingProvider=gemini` 분기
+- [x] `lib/embedding-worker.js`에 동일 분기 추가
+- [x] `package.json` 의존성 추가 검토 (native `fetch` 사용으로 신규 의존성 불필요)
+- [x] `lib/config.js` env 키 추가
 
 ### Milvus A
 
@@ -169,3 +213,10 @@ YYYY-MM-DD HH:mm | phase | change | result | next
 기록:
 
 - 2026-02-14 19:53 | setup | `devlog/plan.md` 생성 및 07.7 기반 실행 플랜 확정 | A 우선/B 후속 방향 고정 | Phase 0 베이스라인 캡처 시작
+- 2026-02-14 20:25 | phase0 | 서버 스모크를 auto-index OFF + lazy-load 조건으로 실행 | 임베딩 미호출 상태에서 기동/종료 정상 확인 | 비임베딩 테스트셋 베이스라인 확정
+- 2026-02-14 20:25 | phase0 | 비임베딩 테스트셋 실행(`ast-chunker`, `tokenizer`, `check-last-version`, `better-sqlite3`, `device-detection`) | 2건의 스펙/환경 불일치 실패 확인(Node v25 기대, default config 기대치 구버전) | Phase 0 문서화 후 Phase 1 착수 전 정렬 여부 결정
+- 2026-02-14 20:25 | phase0 | A/B 공용 기준 쿼리 10개 확정 | 품질/지연 비교용 고정 세트 준비 완료 | 롤백 태그 전략만 남음
+- 2026-02-14 20:25 | phase0 | 롤백 태그 네이밍/절차 표준화 (실행 보류) | 실행 커맨드와 복귀 기준 문서화 완료 | Phase 0 문서 기준 완료
+- 2026-02-14 20:27 | phase0 | 비임베딩 테스트 2건 기대치 정렬(`better-sqlite3`, `device-detection`) | Node v22 환경 및 현재 default config 기준으로 재검증 성공 | Phase 1 준비 상태 확정
+- 2026-02-14 20:34 | phase1 | Gemini embedder + config/env + worker 전달 경로 구현 | `embeddingProvider=gemini` 진입 경로 완성, worker는 safe mode 단일 스레드 정책 적용 | 문서/테스트 반영 후 커밋
+- 2026-02-14 20:34 | phase1 | 모킹 기반 검증(`gemini-embedder`, `device-detection` 확장) + 회귀셋 실행 | 6 test files, 154 tests 통과. Gemini provider 서버 부팅 스모크 정상 | submodule/parent 커밋 진행

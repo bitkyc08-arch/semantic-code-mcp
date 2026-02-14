@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 
-An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Built with local AI models using Matryoshka Representation Learning (MRL) for flexible embedding dimensions (64-768d).
+An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Supports local MRL embeddings and Gemini API embeddings.
 
 ## What This Does
 
@@ -199,9 +199,17 @@ Customize behavior via environment variables:
 | `SMART_CODING_BATCH_SIZE`          | `100`                            | Files to process in parallel               |
 | `SMART_CODING_MAX_FILE_SIZE`       | `1048576`                        | Max file size in bytes (1MB)               |
 | `SMART_CODING_CHUNK_SIZE`          | `25`                             | Lines of code per chunk                    |
-| `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | MRL dimension (64, 128, 256, 512, 768)     |
+| `SMART_CODING_EMBEDDING_PROVIDER`  | `local`                          | Embedding provider (`local`, `gemini`)      |
+| `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | Local MRL dimension (64, 128, 256, 512, 768) |
 | `SMART_CODING_EMBEDDING_MODEL`     | `nomic-ai/nomic-embed-text-v1.5` | AI embedding model                         |
-| `SMART_CODING_DEVICE`              | `cpu`                            | Inference device (`cpu`, `webgpu`, `auto`) |
+| `SMART_CODING_DEVICE`              | `auto`                           | Inference device (`cpu`, `webgpu`, `auto`) |
+| `SMART_CODING_GEMINI_API_KEY`      | ``                               | Gemini API key (required when provider is gemini) |
+| `SMART_CODING_GEMINI_MODEL`        | `gemini-embedding-001`           | Gemini embedding model                      |
+| `SMART_CODING_GEMINI_BASE_URL`     | `https://generativelanguage.googleapis.com/v1beta/openai` | OpenAI-compatible Gemini base URL |
+| `SMART_CODING_GEMINI_DIMENSIONS`   | `768`                            | Gemini output dimensions                    |
+| `SMART_CODING_GEMINI_BATCH_SIZE`   | `24`                             | Gemini micro-batch size                     |
+| `SMART_CODING_GEMINI_BATCH_FLUSH_MS` | `12`                           | Gemini micro-batch flush delay (ms)         |
+| `SMART_CODING_GEMINI_MAX_RETRIES`  | `3`                              | Gemini request retry count                  |
 | `SMART_CODING_SEMANTIC_WEIGHT`     | `0.7`                            | Weight for semantic vs exact matching      |
 | `SMART_CODING_EXACT_MATCH_BOOST`   | `1.5`                            | Boost multiplier for exact text matches    |
 | `SMART_CODING_MAX_CPU_PERCENT`     | `50`                             | Max CPU usage during indexing (10-100%)    |
@@ -220,7 +228,9 @@ Customize behavior via environment variables:
       "env": {
         "SMART_CODING_VERBOSE": "true",
         "SMART_CODING_MAX_RESULTS": "10",
-        "SMART_CODING_EMBEDDING_DIMENSION": "256"
+        "SMART_CODING_EMBEDDING_PROVIDER": "gemini",
+        "SMART_CODING_GEMINI_API_KEY": "YOUR_KEY",
+        "SMART_CODING_GEMINI_MODEL": "gemini-embedding-001"
       }
     }
   }
@@ -255,7 +265,7 @@ flowchart TB
         subgraph Indexing["Indexing Pipeline"]
             Discovery["File Discovery<br/>glob patterns + smart ignore"]
             Chunking["Code Chunking<br/>Smart (regex) / AST (Tree-sitter)"]
-            Embedding["AI Embedding<br/>transformers.js + ONNX Runtime"]
+            Embedding["AI Embedding<br/>Local (transformers.js) or Gemini API"]
         end
 
         subgraph AI["AI Model"]

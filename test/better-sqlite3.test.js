@@ -1,7 +1,7 @@
 /**
  * Tests for better-sqlite3 compatibility
- * 
- * Tests that better-sqlite3 v12.5.0 works correctly with Node.js v25:
+ *
+ * Tests that better-sqlite3 v12.5.0 works correctly with supported Node.js:
  * - Database creation
  * - Table creation
  * - Data insertion
@@ -137,10 +137,12 @@ describe('better-sqlite3 Integration', () => {
     });
   });
 
-  describe('Node.js v25 Compatibility', () => {
+  describe('Node.js Compatibility', () => {
     it('should work with current Node.js version', () => {
-      // This test verifies we can use better-sqlite3 with Node.js v25
-      expect(process.version).toMatch(/^v25\./);
+      // Validate semver-like Node version and minimum supported runtime.
+      expect(process.version).toMatch(/^v\d+\.\d+\.\d+$/);
+      const major = Number.parseInt(process.version.slice(1).split('.')[0], 10);
+      expect(major).toBeGreaterThanOrEqual(18);
       
       db = new Database(testDbPath);
       db.exec('CREATE TABLE compatibility_test (id INTEGER PRIMARY KEY, version TEXT)');

@@ -45,6 +45,12 @@ export class CodebaseIndexer {
       return;
     }
 
+    const provider = (this.config.embeddingProvider || 'local').toLowerCase();
+    if (provider === 'gemini') {
+      console.error("[Indexer] Single-threaded mode (gemini provider - API rate-limit safe mode)");
+      return;
+    }
+
     // Check if workers are explicitly disabled
     if (this.config.workerThreads === 0 || this.config.disableWorkers) {
       console.error("[Indexer] Single-threaded mode (workers disabled by config)");
@@ -73,8 +79,16 @@ export class CodebaseIndexer {
       try {
         const worker = new Worker(workerPath, {
           workerData: { 
+            embeddingProvider: this.config.embeddingProvider,
             embeddingModel: this.config.embeddingModel,
             embeddingDimension: this.config.embeddingDimension,
+            geminiApiKey: this.config.geminiApiKey,
+            geminiModel: this.config.geminiModel,
+            geminiBaseURL: this.config.geminiBaseURL,
+            geminiDimensions: this.config.geminiDimensions,
+            geminiBatchSize: this.config.geminiBatchSize,
+            geminiBatchFlushMs: this.config.geminiBatchFlushMs,
+            geminiMaxRetries: this.config.geminiMaxRetries,
             verbose: this.config.verbose
           }
         });

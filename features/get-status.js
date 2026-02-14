@@ -99,8 +99,17 @@ export class StatusReporter {
       },
 
       model: {
-        name: this.embedder?.modelName || this.config.embeddingModel,
-        dimension: this.embedder?.dimension || this.config.embeddingDimension,
+        provider: this.config.embeddingProvider,
+        name: this.embedder?.modelName || (
+          this.config.embeddingProvider === 'gemini'
+            ? this.config.geminiModel
+            : this.config.embeddingModel
+        ),
+        dimension: this.embedder?.dimension || (
+          this.config.embeddingProvider === 'gemini'
+            ? this.config.geminiDimensions
+            : this.config.embeddingDimension
+        ),
         device: this.embedder?.device || this.config.device
       },
 
@@ -125,7 +134,8 @@ export class StatusReporter {
         chunkSize: this.config.chunkSize,
         semanticWeight: this.config.semanticWeight,
         exactMatchBoost: this.config.exactMatchBoost,
-        workerThreads: this.config.workerThreads
+        workerThreads: this.config.workerThreads,
+        embeddingProvider: this.config.embeddingProvider
       },
       
       resourceThrottling: {
