@@ -10,10 +10,74 @@ export class HybridSearch {
   }
 
   async search(query, maxResults) {
+    const hasAnnSearch = typeof this.cache?.searchByVector === "function";
+
+    // Show warning if indexing is still in progress but we have some results
+    let indexingWarning = null;
+    if (this.indexer?.indexingStatus?.inProgress) {
+      indexingWarning = `⚠️ Indexing in progress (${this.indexer.indexingStatus.percentage}% complete). Results shown are from partially indexed codebase.\n\n`;
+    }
+
+    // Generate query embedding
+    const queryEmbed = await this.embedder(query, { pooling: "mean", normalize: true });
+    const queryVector = Array.from(queryEmbed.data);
+
+    if (hasAnnSearch) {
+      const annTopK = Math.max(maxResults * 5, 20);
+      const candidates = await this.cache.searchByVector(queryVector, annTopK);
+
+      const scoredChunks = candidates.map((chunk) => {
+        // Base semantic score from provider (Milvus or fallback cache) plus lexical boost.
+        let score = Number(chunk.score || 0) * this.config.semanticWeight;
+
+        const lowerQuery = query.toLowerCase();
+        const lowerContent = String(chunk.content || "").toLowerCase();
+
+        if (lowerContent.includes(lowerQuery)) {
+          score += this.config.exactMatchBoost;
+        } else {
+          const queryWords = lowerQuery.split(/\s+/).filter(Boolean);
+          const matchedWords = queryWords.filter(
+            (word) => word.length > 2 && lowerContent.includes(word)
+          ).length;
+          const lexicalBoost = queryWords.length > 0 ? (matchedWords / queryWords.length) * 0.3 : 0;
+          score += lexicalBoost;
+        }
+
+        return { ...chunk, score };
+      });
+
+      const results = scoredChunks
+        .sort((a, b) => b.score - a.score)
+        .slice(0, maxResults);
+
+      if (results.length === 0) {
+        const stats = typeof this.cache?.getStats === "function"
+          ? await this.cache.getStats().catch(() => null)
+          : null;
+        const totalChunks = Number(stats?.totalChunks || 0);
+
+        if (totalChunks === 0) {
+          if (this.indexer?.indexingStatus?.inProgress) {
+            return {
+              results: [],
+              message: `Indexing in progress (${this.indexer.indexingStatus.percentage}% complete). Search available but results may be incomplete. Please wait for indexing to finish for full coverage.`
+            };
+          }
+          return {
+            results: [],
+            message: "No code has been indexed yet. Please wait for initial indexing to complete."
+          };
+        }
+      }
+
+      return { results, message: null, indexingWarning };
+    }
+
+    // Legacy fallback: in-memory vector scoring.
     const vectorStore = this.cache.getVectorStore();
-    
+
     if (vectorStore.length === 0) {
-      // Check if indexing is in progress
       if (this.indexer?.indexingStatus?.inProgress) {
         return {
           results: [],
@@ -25,41 +89,26 @@ export class HybridSearch {
         message: "No code has been indexed yet. Please wait for initial indexing to complete."
       };
     }
-    
-    // Show warning if indexing is still in progress but we have some results
-    let indexingWarning = null;
-    if (this.indexer?.indexingStatus?.inProgress) {
-      indexingWarning = `⚠️ Indexing in progress (${this.indexer.indexingStatus.percentage}% complete). Results shown are from partially indexed codebase.\n\n`;
-    }
 
-    // Generate query embedding
-    const queryEmbed = await this.embedder(query, { pooling: "mean", normalize: true });
-    const queryVector = Array.from(queryEmbed.data);
-
-    // Score all chunks
-    const scoredChunks = vectorStore.map(chunk => {
-      // Semantic similarity
+    const scoredChunks = vectorStore.map((chunk) => {
       let score = cosineSimilarity(queryVector, chunk.vector) * this.config.semanticWeight;
-      
-      // Exact match boost
+
       const lowerQuery = query.toLowerCase();
       const lowerContent = chunk.content.toLowerCase();
-      
+
       if (lowerContent.includes(lowerQuery)) {
         score += this.config.exactMatchBoost;
       } else {
-        // Partial word matching
         const queryWords = lowerQuery.split(/\s+/);
-        const matchedWords = queryWords.filter(word => 
+        const matchedWords = queryWords.filter((word) =>
           word.length > 2 && lowerContent.includes(word)
         ).length;
         score += (matchedWords / queryWords.length) * 0.3;
       }
-      
+
       return { ...chunk, score };
     });
 
-    // Get top results
     const results = scoredChunks
       .sort((a, b) => b.score - a.score)
       .slice(0, maxResults);

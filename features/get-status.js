@@ -43,11 +43,25 @@ export class StatusReporter {
    * Get comprehensive status
    */
   async getStatus() {
-    const vectorStore = this.cache?.getVectorStore() || [];
     const vectorStoreProvider = (this.config.vectorStoreProvider || 'sqlite').toLowerCase();
-    
-    // Get unique files from vector store
-    const uniqueFiles = new Set(vectorStore.map(v => v.file));
+    let totalChunks = 0;
+    let totalFiles = 0;
+
+    if (typeof this.cache?.getStats === 'function') {
+      try {
+        const stats = await this.cache.getStats();
+        totalChunks = Number(stats?.totalChunks || 0);
+        totalFiles = Number(stats?.totalFiles || 0);
+      } catch (err) {
+        // Fallback to legacy vectorStore contract if cache-specific stats fail.
+      }
+    }
+
+    if (totalChunks === 0 && totalFiles === 0) {
+      const vectorStore = this.cache?.getVectorStore?.() || [];
+      totalChunks = vectorStore.length;
+      totalFiles = new Set(vectorStore.map((v) => v.file)).size;
+    }
     
     // Get cache size (check for SQLite database)
     let cacheSizeBytes = 0;
@@ -90,7 +104,7 @@ export class StatusReporter {
           percentage: this.indexer.indexingStatus.percentage
         };
       }
-    } else if (vectorStore.length > 0) {
+    } else if (totalChunks > 0) {
       indexStatus = 'ready';
     }
 
@@ -120,8 +134,8 @@ export class StatusReporter {
 
       index: {
         status: indexStatus,
-        filesIndexed: uniqueFiles.size,
-        chunksCount: vectorStore.length,
+        filesIndexed: totalFiles,
+        chunksCount: totalChunks,
         chunkingMode: this.config.chunkingMode,
         ...(progressiveIndexing && { progressiveIndexing })
       },

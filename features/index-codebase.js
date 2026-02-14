@@ -10,6 +10,26 @@ import { ResourceThrottle } from "../lib/resource-throttle.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+async function resolveCacheStats(cache) {
+  if (typeof cache?.getStats === "function") {
+    try {
+      const stats = await cache.getStats();
+      return {
+        totalChunks: Number(stats?.totalChunks || 0),
+        totalFiles: Number(stats?.totalFiles || 0)
+      };
+    } catch {
+      // Fall back to legacy vectorStore contract below.
+    }
+  }
+
+  const vectorStore = cache?.getVectorStore?.() || [];
+  return {
+    totalChunks: vectorStore.length,
+    totalFiles: new Set(vectorStore.map((v) => v.file)).size
+  };
+}
+
 export class CodebaseIndexer {
   constructor(embedder, cache, config, server = null) {
     this.embedder = embedder;
@@ -792,14 +812,18 @@ export class CodebaseIndexer {
     this.sendProgress(100, 100, summaryMsg);
     
     await this.cache.save();
-    
-    const vectorStore = this.cache.getVectorStore();
+
+    const stats = await resolveCacheStats(this.cache);
+    const resolvedTotalChunks =
+      stats.totalChunks === 0 && totalChunks > 0 ? totalChunks : stats.totalChunks;
+    const resolvedTotalFiles =
+      stats.totalFiles === 0 && changedFiles > 0 ? changedFiles : stats.totalFiles;
     return {
       skipped: false,
       filesProcessed: changedFiles,
       chunksCreated: totalChunks,
-      totalFiles: new Set(vectorStore.map(v => v.file)).size,
-      totalChunks: vectorStore.length,
+      totalFiles: resolvedTotalFiles,
+      totalChunks: resolvedTotalChunks,
       duration: totalTime,
       message: changedFiles > 0 
         ? `Indexed ${changedFiles} files (${totalChunks} chunks, ${skippedFiles} unchanged) in ${totalTime}s`
@@ -890,10 +914,10 @@ export async function handleToolCall(request, indexer) {
   }
   
   // Get current stats from cache
-  const vectorStore = indexer.cache.getVectorStore();
+  const cacheStats = await resolveCacheStats(indexer.cache);
   const stats = {
-    totalChunks: result?.totalChunks ?? vectorStore.length,
-    totalFiles: result?.totalFiles ?? new Set(vectorStore.map(v => v.file)).size,
+    totalChunks: result?.totalChunks ?? cacheStats.totalChunks,
+    totalFiles: result?.totalFiles ?? cacheStats.totalFiles,
     filesProcessed: result?.filesProcessed ?? 0,
     chunksCreated: result?.chunksCreated ?? 0
   };

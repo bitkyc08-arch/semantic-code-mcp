@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MilvusCache } from "../lib/milvus-cache.js";
 
 const tempDirs = [];
@@ -76,5 +76,96 @@ describe("Milvus Cache Contract", () => {
     cache.deleteFileHash("x.ts");
     expect(cache.getFileHash("x.ts")).toBeNull();
     expect(cache.getFileMtime("x.ts")).toBeNull();
+  });
+
+  it("should search by vector using Milvus ANN params and map results", async () => {
+    const config = await makeConfig();
+    const cache = new MilvusCache(config);
+
+    const mockSearch = vi.fn().mockResolvedValue({
+      results: [
+        {
+          file: "src/auth.js",
+          start_line: "10",
+          end_line: "20",
+          content: "export async function login() {}",
+          score: 0.9321
+        }
+      ]
+    });
+
+    cache.client = { search: mockSearch };
+
+    const rows = await cache.searchByVector(
+      new Array(768).fill(0.01),
+      7,
+      'file == "src/auth.js"'
+    );
+
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    const request = mockSearch.mock.calls[0][0];
+    expect(request.collection_name).toBe("test_collection");
+    expect(request.anns_field).toBe("vector");
+    expect(request.metric_type).toBe("COSINE");
+    expect(request.limit).toBe(7);
+    expect(request.data).toHaveLength(768);
+    expect(request.filter).toBe('file == "src/auth.js"');
+
+    expect(rows).toEqual([
+      {
+        file: "src/auth.js",
+        startLine: 10,
+        endLine: 20,
+        content: "export async function login() {}",
+        score: 0.9321
+      }
+    ]);
+  });
+
+  it("should flatten nested result arrays from SDK response", async () => {
+    const config = await makeConfig();
+    const cache = new MilvusCache(config);
+
+    cache.client = {
+      search: vi.fn().mockResolvedValue({
+        results: [
+          [
+            {
+              file: "src/a.js",
+              start_line: 1,
+              end_line: 2,
+              content: "const a = 1",
+              score: 0.8
+            }
+          ]
+        ]
+      })
+    };
+
+    const rows = await cache.searchByVector(new Array(768).fill(0.02), 3);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].file).toBe("src/a.js");
+    expect(rows[0].score).toBe(0.8);
+  });
+
+  it("should throw when client is not initialized", async () => {
+    const config = await makeConfig();
+    const cache = new MilvusCache(config);
+
+    await expect(cache.searchByVector(new Array(768).fill(0.01), 5)).rejects.toThrow(
+      "Milvus client not initialized"
+    );
+  });
+
+  it("should validate query vector dimension before search call", async () => {
+    const config = await makeConfig();
+    const cache = new MilvusCache(config);
+    const mockSearch = vi.fn();
+    cache.client = { search: mockSearch };
+
+    await expect(cache.searchByVector([0.1, 0.2], 5)).rejects.toThrow(
+      "Query vector dimension mismatch"
+    );
+    expect(mockSearch).not.toHaveBeenCalled();
   });
 });
