@@ -55,7 +55,7 @@
     "**/_legacy/**"
   ],
   "smartIndexing": true,
-  "chunkSize": 15,
+  "chunkSize": 10,
   "chunkOverlap": 3,
   "batchSize": 100,
   "maxFileSize": 1048576,
@@ -74,6 +74,7 @@
   "geminiBatchSize": 24,
   "geminiBatchFlushMs": 12,
   "geminiMaxRetries": 3,
+  "geminiMaxConcurrentBatches": 50,
   "chunkingMode": "smart",
   "semanticWeight": 0.7,
   "exactMatchBoost": 1.5,
