@@ -1,11 +1,11 @@
 {
-  "name": "smart-coding-mcp",
-  "version": "2.3.3",
-  "description": "An extensible MCP server that enhances coding productivity with AI-powered features including semantic code search, intelligent indexing, and more, using local LLMs",
+  "name": "smart-coding-mcp-gemini-milvus",
+  "version": "1.0.0",
+  "description": "Fork of smart-coding-mcp with Gemini embedding + Milvus ANN search. Drop-in MCP server for AI-powered semantic code search.",
   "type": "module",
   "main": "index.js",
   "bin": {
-    "smart-coding-mcp": "index.js"
+    "smart-coding-mcp-gemini-milvus": "index.js"
   },
   "scripts": {
     "start": "node index.js",
@@ -32,17 +32,23 @@
     "anthropic"
   ],
   "author": {
-    "name": "Omar Haris",
-    "url": "https://www.linkedin.com/in/omarharis/"
+    "name": "bitkyc08",
+    "url": "https://github.com/bitkyc08-arch"
   },
+  "contributors": [
+    {
+      "name": "Omar Haris",
+      "url": "https://www.linkedin.com/in/omarharis/"
+    }
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/omar-haris/smart-coding-mcp.git"
+    "url": "https://github.com/bitkyc08-arch/smart-coding-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/omar-haris/smart-coding-mcp/issues"
+    "url": "https://github.com/bitkyc08-arch/smart-coding-mcp/issues"
   },
-  "homepage": "https://github.com/omar-haris/smart-coding-mcp#readme",
+  "homepage": "https://github.com/bitkyc08-arch/smart-coding-mcp#readme",
   "license": "MIT",
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
