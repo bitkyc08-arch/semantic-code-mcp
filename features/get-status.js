@@ -108,6 +108,19 @@ export class StatusReporter {
       indexStatus = 'ready';
     }
 
+    const provider = (this.config.embeddingProvider || "local").toLowerCase();
+    const isApiProvider = ["gemini", "openai", "openai-compatible", "vertex"].includes(provider);
+    const defaultApiModel =
+      provider === "vertex"
+        ? "gemini-embedding-001"
+        : (provider === "openai" || provider === "openai-compatible")
+          ? "text-embedding-3-small"
+          : (this.config.geminiModel || "gemini-embedding-001");
+    const configuredApiModel =
+      typeof this.config.embeddingModel === "string" && this.config.embeddingModel.trim().length > 0
+        ? this.config.embeddingModel.trim()
+        : "";
+
     return {
       version: packageJson.version,
       uptime: Math.floor((Date.now() - this.startTime) / 1000),
@@ -120,12 +133,16 @@ export class StatusReporter {
       model: {
         provider: this.config.embeddingProvider,
         name: this.embedder?.modelName || (
-          this.config.embeddingProvider === 'gemini'
-            ? this.config.geminiModel
+          isApiProvider
+            ? (
+                configuredApiModel && !configuredApiModel.includes("nomic")
+                  ? configuredApiModel
+                  : defaultApiModel
+              )
             : this.config.embeddingModel
         ),
         dimension: this.embedder?.dimension || (
-          this.config.embeddingProvider === 'gemini'
+          isApiProvider
             ? this.config.geminiDimensions
             : this.config.embeddingDimension
         ),

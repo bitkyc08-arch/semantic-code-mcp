@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 
-An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Supports local MRL embeddings and Gemini API embeddings.
+An extensible Model Context Protocol (MCP) server that provides intelligent semantic code search for AI assistants. Supports **multi-provider embeddings**: local (nomic), Gemini, OpenAI, OpenAI-compatible, and Vertex AI.
 
 ## What This Does
 
@@ -137,13 +137,13 @@ Detailed setup instructions for your preferred environment:
 
 | IDE / App          | Setup Guide                                        | `${workspaceFolder}` Support |
 | ------------------ | -------------------------------------------------- | ---------------------------- |
-| **VS Code**        | [**View Guide**](docs/ide-setup/vscode.md)         | ✅ Yes                       |
-| **Cursor**         | [**View Guide**](docs/ide-setup/cursor.md)         | ✅ Yes                       |
-| **Windsurf**       | [**View Guide**](docs/ide-setup/windsurf.md)       | ❌ Absolute paths only       |
-| **Claude Desktop** | [**View Guide**](docs/ide-setup/claude-desktop.md) | ❌ Absolute paths only       |
-| **OpenCode**       | [**View Guide**](docs/ide-setup/opencode.md)       | ❌ Absolute paths only       |
-| **Raycast**        | [**View Guide**](docs/ide-setup/raycast.md)        | ❌ Absolute paths only       |
-| **Antigravity**    | [**View Guide**](docs/ide-setup/antigravity.md)    | ❌ Absolute paths only       |
+| **VS Code**        | [**View Guide**](docs/ide-setup/vscode.md)         | ✅ Yes                        |
+| **Cursor**         | [**View Guide**](docs/ide-setup/cursor.md)         | ✅ Yes                        |
+| **Windsurf**       | [**View Guide**](docs/ide-setup/windsurf.md)       | ❌ Absolute paths only        |
+| **Claude Desktop** | [**View Guide**](docs/ide-setup/claude-desktop.md) | ❌ Absolute paths only        |
+| **OpenCode**       | [**View Guide**](docs/ide-setup/opencode.md)       | ❌ Absolute paths only        |
+| **Raycast**        | [**View Guide**](docs/ide-setup/raycast.md)        | ❌ Absolute paths only        |
+| **Antigravity**    | [**View Guide**](docs/ide-setup/antigravity.md)    | ❌ Absolute paths only        |
 
 ### Quick Setup
 
@@ -192,35 +192,39 @@ Add to your MCP config file:
 
 Customize behavior via environment variables:
 
-| Variable                           | Default                          | Description                                |
-| ---------------------------------- | -------------------------------- | ------------------------------------------ |
-| `SMART_CODING_VERBOSE`             | `false`                          | Enable detailed logging                    |
-| `SMART_CODING_MAX_RESULTS`         | `5`                              | Max search results returned                |
-| `SMART_CODING_BATCH_SIZE`          | `100`                            | Files to process in parallel               |
-| `SMART_CODING_MAX_FILE_SIZE`       | `1048576`                        | Max file size in bytes (1MB)               |
-| `SMART_CODING_CHUNK_SIZE`          | `25`                             | Lines of code per chunk                    |
-| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                       | Vector store provider (`sqlite`, `milvus`) |
-| `SMART_CODING_MILVUS_ADDRESS`      | ``                               | Milvus endpoint (required when provider is `milvus`) |
-| `SMART_CODING_MILVUS_TOKEN`        | ``                               | Milvus token (optional; e.g. `username:password`) |
-| `SMART_CODING_MILVUS_DATABASE`     | `default`                        | Milvus database name                        |
-| `SMART_CODING_MILVUS_COLLECTION`   | `smart_coding_embeddings`        | Milvus collection name                      |
-| `SMART_CODING_EMBEDDING_PROVIDER`  | `local`                          | Embedding provider (`local`, `gemini`)      |
-| `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | Local MRL dimension (64, 128, 256, 512, 768) |
-| `SMART_CODING_EMBEDDING_MODEL`     | `nomic-ai/nomic-embed-text-v1.5` | AI embedding model                         |
-| `SMART_CODING_DEVICE`              | `auto`                           | Inference device (`cpu`, `webgpu`, `auto`) |
-| `SMART_CODING_GEMINI_API_KEY`      | ``                               | Gemini API key (required when provider is gemini) |
-| `SMART_CODING_GEMINI_MODEL`        | `gemini-embedding-001`           | Gemini embedding model                      |
-| `SMART_CODING_GEMINI_BASE_URL`     | `https://generativelanguage.googleapis.com/v1beta/openai` | OpenAI-compatible Gemini base URL |
-| `SMART_CODING_GEMINI_DIMENSIONS`   | `768`                            | Gemini output dimensions                    |
-| `SMART_CODING_GEMINI_BATCH_SIZE`   | `24`                             | Gemini micro-batch size                     |
-| `SMART_CODING_GEMINI_BATCH_FLUSH_MS` | `12`                           | Gemini micro-batch flush delay (ms)         |
-| `SMART_CODING_GEMINI_MAX_RETRIES`  | `3`                              | Gemini request retry count                  |
-| `SMART_CODING_SEMANTIC_WEIGHT`     | `0.7`                            | Weight for semantic vs exact matching      |
-| `SMART_CODING_EXACT_MATCH_BOOST`   | `1.5`                            | Boost multiplier for exact text matches    |
-| `SMART_CODING_MAX_CPU_PERCENT`     | `50`                             | Max CPU usage during indexing (10-100%)    |
-| `SMART_CODING_CHUNKING_MODE`       | `smart`                          | Code chunking (`smart`, `ast`, `line`)     |
-| `SMART_CODING_WATCH_FILES`         | `false`                          | Auto-reindex on file changes               |
-| `SMART_CODING_AUTO_INDEX_DELAY`    | `5000`                           | Delay before background indexing (ms), `false` to disable |
+| Variable                             | Default                                                   | Description                                                                     |
+| ------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `SMART_CODING_VERBOSE`               | `false`                                                   | Enable detailed logging                                                         |
+| `SMART_CODING_MAX_RESULTS`           | `5`                                                       | Max search results returned                                                     |
+| `SMART_CODING_BATCH_SIZE`            | `100`                                                     | Files to process in parallel                                                    |
+| `SMART_CODING_MAX_FILE_SIZE`         | `1048576`                                                 | Max file size in bytes (1MB)                                                    |
+| `SMART_CODING_CHUNK_SIZE`            | `25`                                                      | Lines of code per chunk                                                         |
+| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                                                  | Vector store provider (`sqlite`, `milvus`)                                      |
+| `SMART_CODING_MILVUS_ADDRESS`        | ``                                                        | Milvus endpoint (required when provider is `milvus`)                            |
+| `SMART_CODING_MILVUS_TOKEN`          | ``                                                        | Milvus token (optional; e.g. `username:password`)                               |
+| `SMART_CODING_MILVUS_DATABASE`       | `default`                                                 | Milvus database name                                                            |
+| `SMART_CODING_MILVUS_COLLECTION`     | `smart_coding_embeddings`                                 | Milvus collection name                                                          |
+| `SMART_CODING_EMBEDDING_PROVIDER`    | `local`                                                   | Embedding provider (`local`, `gemini`, `openai`, `openai-compatible`, `vertex`) |
+| `SMART_CODING_EMBEDDING_DIMENSION`   | `128`                                                     | Local MRL dimension (64, 128, 256, 512, 768)                                    |
+| `SMART_CODING_EMBEDDING_MODEL`       | `nomic-ai/nomic-embed-text-v1.5`                          | AI embedding model                                                              |
+| `SMART_CODING_DEVICE`                | `auto`                                                    | Inference device (`cpu`, `webgpu`, `auto`)                                      |
+| `SMART_CODING_GEMINI_API_KEY`        | ``                                                        | Gemini API key (required when provider is `gemini`)                             |
+| `SMART_CODING_GEMINI_MODEL`          | `gemini-embedding-001`                                    | Gemini embedding model                                                          |
+| `SMART_CODING_GEMINI_BASE_URL`       | `https://generativelanguage.googleapis.com/v1beta/openai` | OpenAI-compatible Gemini base URL                                               |
+| `SMART_CODING_EMBEDDING_API_KEY`     | ``                                                        | API key for `openai` or `openai-compatible` provider                            |
+| `SMART_CODING_EMBEDDING_BASE_URL`    | ``                                                        | Base URL for `openai-compatible` provider                                       |
+| `SMART_CODING_VERTEX_PROJECT`        | ``                                                        | GCP project ID for `vertex` provider                                            |
+| `SMART_CODING_VERTEX_LOCATION`       | `us-central1`                                             | Vertex AI region for `vertex` provider                                          |
+| `SMART_CODING_GEMINI_DIMENSIONS`     | `768`                                                     | Gemini output dimensions                                                        |
+| `SMART_CODING_GEMINI_BATCH_SIZE`     | `24`                                                      | Gemini micro-batch size                                                         |
+| `SMART_CODING_GEMINI_BATCH_FLUSH_MS` | `12`                                                      | Gemini micro-batch flush delay (ms)                                             |
+| `SMART_CODING_GEMINI_MAX_RETRIES`    | `3`                                                       | Gemini request retry count                                                      |
+| `SMART_CODING_SEMANTIC_WEIGHT`       | `0.7`                                                     | Weight for semantic vs exact matching                                           |
+| `SMART_CODING_EXACT_MATCH_BOOST`     | `1.5`                                                     | Boost multiplier for exact text matches                                         |
+| `SMART_CODING_MAX_CPU_PERCENT`       | `50`                                                      | Max CPU usage during indexing (10-100%)                                         |
+| `SMART_CODING_CHUNKING_MODE`         | `smart`                                                   | Code chunking (`smart`, `ast`, `line`)                                          |
+| `SMART_CODING_WATCH_FILES`           | `false`                                                   | Auto-reindex on file changes                                                    |
+| `SMART_CODING_AUTO_INDEX_DELAY`      | `5000`                                                    | Delay before background indexing (ms), `false` to disable                       |
 
 **Example with env vars:**
 
@@ -270,7 +274,7 @@ flowchart TB
         subgraph Indexing["Indexing Pipeline"]
             Discovery["File Discovery<br/>glob patterns + smart ignore"]
             Chunking["Code Chunking<br/>Smart (regex) / AST (Tree-sitter)"]
-            Embedding["AI Embedding<br/>Local (transformers.js) or Gemini API"]
+            Embedding["AI Embedding<br/>Local / Gemini / OpenAI / Vertex AI"]
         end
 
         subgraph AI["AI Model"]
@@ -323,12 +327,11 @@ flowchart TB
 
 ## Privacy
 
-Everything runs **100% locally**:
+**Local mode** (`local` provider): Everything runs 100% locally — AI model on your machine, code never leaves your system.
 
-- AI model runs on your machine (no API calls)
-- Code never leaves your system
-- No telemetry or analytics
-- Cache stored in `.smart-coding-cache/`
+**API mode** (`gemini`/`openai`/`vertex` providers): Code chunks are sent to the embedding API for vectorization. No telemetry or analytics beyond provider API calls.
+
+- Cache stored in `.smart-coding-cache/` (SQLite) or Milvus collection
 
 ## Research Background
 

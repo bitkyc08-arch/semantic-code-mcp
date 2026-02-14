@@ -59,6 +59,7 @@
     "fastembed": "^2.1.0",
     "fdir": "^6.5.0",
     "glob": "^10.3.10",
+    "google-auth-library": "^9.0.0",
     "web-tree-sitter": "^0.24.6"
   },
   "engines": {

@@ -23,15 +23,15 @@ describe("Gemini Embedder", () => {
     global.fetch = originalFetch;
   });
 
-  it("should throw when API key is missing", () => {
+  it("should throw when API key is missing", async () => {
     delete process.env.SMART_CODING_GEMINI_API_KEY;
     delete process.env.GEMINI_API_KEY;
 
-    expect(() =>
+    await expect(
       createGeminiEmbedder({
         geminiApiKey: ""
       })
-    ).toThrow(/Missing API key/);
+    ).rejects.toThrow(/Missing API key/);
   });
 
   it("should return Float32Array vector for a single text", async () => {
@@ -42,7 +42,7 @@ describe("Gemini Embedder", () => {
       })
     });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "test-key",
       geminiModel: "gemini-embedding-001",
       geminiDimensions: 3,
@@ -69,7 +69,7 @@ describe("Gemini Embedder", () => {
       })
     });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "k-123",
       geminiBaseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
     });
@@ -102,7 +102,7 @@ describe("Gemini Embedder", () => {
         })
       });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "retry-key",
       geminiMaxRetries: 1,
       geminiBatchFlushMs: 0
@@ -132,7 +132,7 @@ describe("Gemini Embedder", () => {
         })
       });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "retry-429-key",
       geminiMaxRetries: 1,
       geminiBatchFlushMs: 0
@@ -158,7 +158,7 @@ describe("Gemini Embedder", () => {
         })
       });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "retry-network-key",
       geminiMaxRetries: 1,
       geminiBatchFlushMs: 0,
@@ -179,7 +179,7 @@ describe("Gemini Embedder", () => {
       text: async () => "still rate limited"
     });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "retry-limit-key",
       geminiMaxRetries: 2,
       geminiBatchFlushMs: 0
@@ -214,7 +214,7 @@ describe("Gemini Embedder", () => {
       };
     });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "batch-retry-key",
       geminiDimensions: 2,
       geminiBatchSize: 64,
@@ -239,7 +239,7 @@ describe("Gemini Embedder", () => {
       text: async () => "bad request"
     });
 
-    const embedder = createGeminiEmbedder({
+    const embedder = await createGeminiEmbedder({
       geminiApiKey: "bad-request-key",
       geminiMaxRetries: 3,
       geminiBatchFlushMs: 0

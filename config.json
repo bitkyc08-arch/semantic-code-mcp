@@ -78,7 +78,7 @@
   "chunkingMode": "smart",
   "semanticWeight": 0.7,
   "exactMatchBoost": 1.5,
-  "workerThreads": "auto",
+  "workerThreads": 50,
   "maxCpuPercent": 50,
   "batchDelay": 100,
   "autoIndexDelay": 5000
