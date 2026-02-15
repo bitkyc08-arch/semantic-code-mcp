@@ -276,6 +276,15 @@ Copyright (c) 2025 Omar Haris (original), bitkyc08 (modifications, 2026)
 
 See [LICENSE](LICENSE) for full text.
 
----
+### About
 
-*Forked from [smart-coding-mcp](https://github.com/omarHaris/smart-coding-mcp) by Omar Haris. Extended with multi-provider embeddings (Gemini, Vertex AI, OpenAI), Milvus ANN search, AST chunking, resource throttling, and comprehensive test suite.*
+This project is a fork of [smart-coding-mcp](https://github.com/omarHaris/smart-coding-mcp) by Omar Haris, heavily extended for production use.
+
+**Key additions over upstream**:
+- Multi-provider embeddings (Gemini, Vertex AI, OpenAI, OpenAI-compatible)
+- Milvus vector store with ANN search for large codebases
+- AST-based code chunking via Tree-sitter
+- Resource throttling (CPU cap at 50%)
+- Runtime workspace switching (`e_set_workspace`)
+- Package version checker across 20+ registries (`d_check_last_version`)
+- Comprehensive IDE setup guides (VS Code, Cursor, Windsurf, Claude Desktop, Antigravity)
