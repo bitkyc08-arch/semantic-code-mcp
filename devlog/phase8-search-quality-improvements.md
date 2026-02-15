@@ -112,7 +112,7 @@ const isExcludedDirectory = (dirName) => {
 exec node "$SMART_CODING_ROOT/index.js" --workspace "$SMART_CODING_ROOT"
 
 # After
-exec node "$SMART_CODING_ROOT/index.js" --workspace '/Users/jun/Library/Mobile Documents/iCloud~md~obsidian/Documents/new'
+exec node "$SMART_CODING_ROOT/index.js" --workspace '/Users/jun/Developer/new'
 ```
 
 ---
