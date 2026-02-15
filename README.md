@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
 
-AI-powered semantic code search for coding agents. An MCP server that indexes your codebase with vector embeddings so AI assistants can find code by **meaning**, not just keywords.
+AI-powered semantic code search for coding agents. An MCP server that indexes your codebase with vector embeddings so AI assistants can find code by **meaning**, not just keywords. Supports **multi-agent concurrent access** via Milvus Docker — run Claude, Codex, Copilot, and Antigravity against the same index simultaneously.
 
 > Ask *"where do we handle authentication?"* and find code that uses `login`, `session`, `verifyCredentials` — even when no file contains the word "authentication."
 
@@ -187,6 +187,70 @@ Three modes to match your codebase:
 ### Resource Throttling
 
 CPU capped at 50% during indexing. Your machine stays responsive.
+
+### Multi-Agent Concurrent Access
+
+Multiple AI agents (Claude Code, Codex, Copilot, Antigravity) can query the same vector index simultaneously via **Milvus Standalone** (Docker). No file locking, no index corruption.
+
+```mermaid
+graph LR
+    A["Claude Code"] --> M["Milvus Standalone\n(Docker)"]
+    B["Codex"] --> M
+    C["Copilot"] --> M
+    D["Antigravity"] --> M
+    M --> V["Shared Vector Index"]
+```
+
+<details>
+<summary><strong>Docker Setup (Milvus Standalone)</strong></summary>
+
+**1. Start Milvus:**
+
+```bash
+# docker-compose.yml (or use the official Milvus standalone script)
+curl -sfL https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh | bash
+```
+
+Or with Docker Compose:
+
+```yaml
+version: '3.5'
+services:
+  milvus:
+    image: milvusdb/milvus:latest
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - milvus-data:/var/lib/milvus
+volumes:
+  milvus-data:
+```
+
+```bash
+docker compose up -d
+```
+
+**2. Configure MCP to use Milvus:**
+
+```json
+{
+  "env": {
+    "SMART_CODING_VECTOR_STORE_PROVIDER": "milvus",
+    "SMART_CODING_MILVUS_ADDRESS": "http://localhost:19530"
+  }
+}
+```
+
+**3. Verify:**
+
+```bash
+curl http://localhost:19530/v1/vector/collections
+```
+
+> **SQLite vs Milvus:** SQLite is single-process — only one agent can write at a time. Milvus handles concurrent reads/writes from multiple agents without conflicts. Use Milvus when running 2+ agents on the same codebase.
+
+</details>
 
 ## Tools
 
