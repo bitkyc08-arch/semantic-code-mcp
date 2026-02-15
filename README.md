@@ -250,7 +250,7 @@ Top N results with relevance scores
 
 MIT License
 
-Copyright (c) 2025 Omar Haris (original), bitkyc08 (modifications)
+Copyright (c) 2025 Omar Haris (original), bitkyc08 (modifications, 2026)
 
 See [LICENSE](LICENSE) for full text.
 
