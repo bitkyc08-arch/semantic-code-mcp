@@ -22,7 +22,7 @@ Based on [Cursor's research](https://cursor.com/blog/semsearch) showing semantic
 
 ```mermaid
 graph LR
-    A["Claude Code"] --> M["Milvus Standalone\n(Docker)"]
+    A["Claude Code"] --> M["Milvus Standalone<br/>(Docker)"]
     B["Codex"] --> M
     C["Copilot"] --> M
     D["Antigravity"] --> M
@@ -497,14 +497,14 @@ graph TD
 
 ```mermaid
 flowchart LR
-    A["📁 Source Files"] -->|glob + .gitignore| B["✂️ Smart/AST\nChunking"]
-    B -->|language-aware| C["🧠 AI Embedding\n(Local or API)"]
-    C -->|vectors| D["💾 SQLite / Milvus\nStorage"]
+    A["📁 Source Files"] -->|glob + .gitignore| B["✂️ Smart/AST<br/>Chunking"]
+    B -->|language-aware| C["🧠 AI Embedding<br/>(Local or API)"]
+    C -->|vectors| D["💾 SQLite / Milvus<br/>Storage"]
     D -->|incremental hash| D
 
     E["🔍 Search Query"] -->|embed| C
-    C -->|cosine similarity| F["📊 Hybrid Scoring\nsemantic + exact match"]
-    F --> G["🎯 Top N Results\nwith relevance scores"]
+    C -->|cosine similarity| F["📊 Hybrid Scoring<br/>semantic + exact match"]
+    F --> G["🎯 Top N Results<br/>with relevance scores"]
 
     style A fill:#2d3748,color:#e2e8f0
     style C fill:#553c9a,color:#e9d8fd
