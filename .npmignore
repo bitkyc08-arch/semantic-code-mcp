@@ -5,6 +5,7 @@ test/
 docs/
 scripts/
 .github/
+.claude/
 vitest.config.js
 CONTRIBUTING.md
 ARCHITECTURE.md
@@ -12,4 +13,8 @@ ARCHITECTURE.md
 # Cache/build
 node_modules/
 .cache/
+.smart-coding-cache/
 *.test.js
+
+# Images (not needed at runtime)
+*.png
