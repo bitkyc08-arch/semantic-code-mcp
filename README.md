@@ -319,42 +319,52 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 
 ```mermaid
 graph TB
-    subgraph MCP["MCP Server (index.js)"]
-        direction TB
-        CFG["config.js<br/>Configuration"]
+    subgraph MCP["MCP Server"]
+        CFG["config.js"]
     end
 
     subgraph Features
-        SEARCH["hybrid-search.js<br/>Semantic + Exact Match"]
-        INDEX["index-codebase.js<br/>File Discovery & Indexing"]
-        STATUS["get-status.js<br/>Server Health"]
-        WORKSPACE["set-workspace.js<br/>Runtime Switching"]
-        VERSION["check-last-version.js<br/>Registry Lookup"]
-        CLEAR["clear-cache.js<br/>Cache Reset"]
+        SEARCH["hybrid-search.js"]
+        INDEX["index-codebase.js"]
+        STATUS["get-status.js"]
+        WORKSPACE["set-workspace.js"]
+        VERSION["check-last-version.js"]
+        CLEAR["clear-cache.js"]
     end
 
     subgraph Embeddings["Embedding Providers"]
-        LOCAL["mrl-embedder.js<br/>nomic-embed-text v1.5"]
-        GEMINI["gemini-embedder.js<br/>Gemini / Vertex AI"]
+        LOCAL["mrl-embedder.js — Local"]
+        GEMINI["gemini-embedder.js — Gemini/Vertex"]
         OAI["OpenAI / Compatible"]
     end
 
     subgraph Storage["Vector Storage"]
-        SQLITE["cache.js<br/>SQLite (default)"]
-        MILVUS["milvus-cache.js<br/>Milvus ANN"]
-        FACTORY["cache-factory.js<br/>Provider Selection"]
+        SQLITE["cache.js — SQLite"]
+        MILVUS["milvus-cache.js — Milvus"]
+        FACTORY["cache-factory.js"]
     end
 
     subgraph Chunking["Code Chunking"]
-        AST["ast-chunker.js<br/>Tree-sitter AST"]
-        SMART["utils.js<br/>Smart Regex"]
+        AST["ast-chunker.js — Tree-sitter"]
+        SMART["utils.js — Smart Regex"]
     end
 
-    MCP --> Features
-    INDEX --> Chunking --> Embeddings --> FACTORY
+    CFG --> SEARCH
+    CFG --> INDEX
+    INDEX --> AST
+    INDEX --> SMART
+    AST --> LOCAL
+    AST --> GEMINI
+    AST --> OAI
+    SMART --> LOCAL
+    SMART --> GEMINI
+    LOCAL --> FACTORY
+    GEMINI --> FACTORY
+    OAI --> FACTORY
     FACTORY --> SQLITE
     FACTORY --> MILVUS
-    SEARCH --> Embeddings
+    SEARCH --> LOCAL
+    SEARCH --> GEMINI
     SEARCH --> FACTORY
 ```
 
