@@ -9,51 +9,56 @@ function makeRequest(force = false) {
   };
 }
 
-describe("index-codebase stats contract", () => {
-  it("should use cache.getStats() when index result omits totals", async () => {
+describe("index-codebase non-blocking contract", () => {
+  it("should return accepted response when not indexing", async () => {
     const indexer = {
-      indexAll: vi.fn().mockResolvedValue({
-        skipped: false,
-        filesProcessed: 0,
-        chunksCreated: 0,
-        message: "All files up to date"
-      }),
-      cache: {
-        getStats: vi.fn().mockResolvedValue({ totalChunks: 11, totalFiles: 3 })
-      }
+      isIndexing: false,
+      startBackgroundIndexing: vi.fn(),
+      getIndexingStatus: vi.fn()
     };
 
     const result = await handleToolCall(makeRequest(false), indexer);
-    const text = result.content[0].text;
+    const parsed = JSON.parse(result.content[0].text);
 
-    expect(indexer.indexAll).toHaveBeenCalledWith(false);
-    expect(indexer.cache.getStats).toHaveBeenCalledTimes(1);
-    expect(text).toContain("Total files in index: 3");
-    expect(text).toContain("Total code chunks: 11");
+    expect(parsed.accepted).toBe(true);
+    expect(parsed.status).toBe("started");
+    expect(indexer.startBackgroundIndexing).toHaveBeenCalledWith(false);
   });
 
-  it("should fall back to getVectorStore() when getStats is unavailable", async () => {
+  it("should return rejected response when already indexing", async () => {
     const indexer = {
-      indexAll: vi.fn().mockResolvedValue({
-        skipped: false,
-        filesProcessed: 1,
-        chunksCreated: 2
-      }),
-      cache: {
-        getVectorStore: vi.fn(() => [
-          { file: "a.js" },
-          { file: "b.js" },
-          { file: "b.js" }
-        ])
-      }
+      isIndexing: true,
+      startBackgroundIndexing: vi.fn(),
+      getIndexingStatus: vi.fn().mockReturnValue({
+        inProgress: true,
+        totalFiles: 100,
+        processedFiles: 42,
+        percentage: 42
+      })
+    };
+
+    const result = await handleToolCall(makeRequest(false), indexer);
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.accepted).toBe(false);
+    expect(parsed.status).toBe("rejected");
+    expect(parsed.message).toContain("already in progress");
+    expect(parsed.progress.percentage).toBe(42);
+    expect(indexer.startBackgroundIndexing).not.toHaveBeenCalled();
+  });
+
+  it("should pass force parameter to startBackgroundIndexing", async () => {
+    const indexer = {
+      isIndexing: false,
+      startBackgroundIndexing: vi.fn(),
+      getIndexingStatus: vi.fn()
     };
 
     const result = await handleToolCall(makeRequest(true), indexer);
-    const text = result.content[0].text;
+    const parsed = JSON.parse(result.content[0].text);
 
-    expect(indexer.cache.getVectorStore).toHaveBeenCalledTimes(1);
-    expect(text).toContain("Total files in index: 2");
-    expect(text).toContain("Total code chunks: 3");
+    expect(parsed.accepted).toBe(true);
+    expect(parsed.force).toBe(true);
+    expect(indexer.startBackgroundIndexing).toHaveBeenCalledWith(true);
   });
 });
-

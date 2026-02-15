@@ -935,7 +935,7 @@ export class CodebaseIndexer {
 export function getToolDefinition() {
   return {
     name: "b_index_codebase",
-    description: "Manually trigger a full reindex of the codebase. This will scan all files and update the embeddings cache. Useful after large code changes or if the index seems out of date.",
+    description: "Trigger codebase reindex. Returns IMMEDIATELY (non-blocking). Poll f_get_status until index.status='ready' before calling a_semantic_search. Do NOT search while indexing.",
     inputSchema: {
       type: "object",
       properties: {
@@ -959,41 +959,35 @@ export function getToolDefinition() {
 // Tool handler
 export async function handleToolCall(request, indexer) {
   const force = request.params.arguments?.force || false;
-  const result = await indexer.indexAll(force);
 
-  // Handle case when indexing was skipped due to concurrent request
-  if (result?.skipped) {
+  // Guard: already indexing
+  if (indexer.isIndexing) {
+    const status = indexer.getIndexingStatus();
     return {
       content: [{
         type: "text",
-        text: `Indexing skipped: ${result.reason}\n\nPlease wait for the current indexing operation to complete before requesting another reindex.`
+        text: JSON.stringify({
+          accepted: false,
+          status: "rejected",
+          message: "Indexing already in progress. Use f_get_status to poll.",
+          progress: status
+        }, null, 2)
       }]
     };
   }
 
-  // Get current stats from cache
-  const cacheStats = await resolveCacheStats(indexer.cache);
-  const stats = {
-    totalChunks: result?.totalChunks ?? cacheStats.totalChunks,
-    totalFiles: result?.totalFiles ?? cacheStats.totalFiles,
-    filesProcessed: result?.filesProcessed ?? 0,
-    chunksCreated: result?.chunksCreated ?? 0
-  };
-
-  let message = result?.message
-    ? `Codebase reindexed successfully.\n\n${result.message}`
-    : `Codebase reindexed successfully.`;
-
-  message += `\n\nStatistics:\n- Total files in index: ${stats.totalFiles}\n- Total code chunks: ${stats.totalChunks}`;
-
-  if (stats.filesProcessed > 0) {
-    message += `\n- Files processed this run: ${stats.filesProcessed}\n- Chunks created this run: ${stats.chunksCreated}`;
-  }
+  // Fire-and-forget — returns immediately
+  indexer.startBackgroundIndexing(force);
 
   return {
     content: [{
       type: "text",
-      text: message
+      text: JSON.stringify({
+        accepted: true,
+        status: "started",
+        message: "Indexing started in background. Use f_get_status to poll progress.",
+        force
+      }, null, 2)
     }]
   };
 }

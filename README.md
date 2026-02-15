@@ -4,8 +4,13 @@
 [![npm downloads](https://img.shields.io/npm/dm/semantic-code-mcp.svg)](https://www.npmjs.com/package/semantic-code-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
+[![Non-Blocking](https://img.shields.io/badge/Indexing-Non--Blocking-brightgreen)]()
+[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Concurrent-orange)]()
+[![Milvus](https://img.shields.io/badge/Vector%20DB-Milvus%20%7C%20Zilliz-00A1EA)](https://milvus.io)
 
-AI-powered semantic code search for coding agents. An MCP server that indexes your codebase with vector embeddings so AI assistants can find code by **meaning**, not just keywords. Supports **multi-agent concurrent access** via Milvus Docker — run Claude, Codex, Copilot, and Antigravity against the same index simultaneously.
+AI-powered semantic code search for coding agents. An MCP server with **non-blocking background indexing**, **multi-provider embeddings** (Gemini, Vertex AI, OpenAI, local), and **Milvus / Zilliz Cloud** vector storage — designed for **multi-agent concurrent access**.
+
+Run Claude Code, Codex, Copilot, and Antigravity against the same code index simultaneously. Indexing runs in the background; search works immediately while indexing continues.
 
 > Ask *"where do we handle authentication?"* and find code that uses `login`, `session`, `verifyCredentials` — even when no file contains the word "authentication."
 
@@ -393,17 +398,17 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 
 ### Core
 
-| Variable                        | Default   | Description                 |
-| ------------------------------- | --------- | --------------------------- |
-| `SMART_CODING_VERBOSE`          | `false`   | Detailed logging            |
-| `SMART_CODING_MAX_RESULTS`      | `5`       | Search results returned     |
-| `SMART_CODING_BATCH_SIZE`       | `100`     | Files per parallel batch    |
-| `SMART_CODING_MAX_FILE_SIZE`    | `1048576` | Max file size (1MB)         |
-| `SMART_CODING_CHUNK_SIZE`       | `25`      | Lines per chunk             |
-| `SMART_CODING_CHUNKING_MODE`    | `smart`   | `smart` / `ast` / `line`    |
-| `SMART_CODING_WATCH_FILES`      | `false`   | Auto-reindex on changes     |
-| `SMART_CODING_AUTO_INDEX_DELAY` | `5000`    | Background index delay (ms) |
-| `SMART_CODING_MAX_CPU_PERCENT`  | `50`      | CPU cap during indexing     |
+| Variable                        | Default   | Description                                                                                             |
+| ------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `SMART_CODING_VERBOSE`          | `false`   | Detailed logging                                                                                        |
+| `SMART_CODING_MAX_RESULTS`      | `5`       | Search results returned                                                                                 |
+| `SMART_CODING_BATCH_SIZE`       | `100`     | Files per parallel batch                                                                                |
+| `SMART_CODING_MAX_FILE_SIZE`    | `1048576` | Max file size (1MB)                                                                                     |
+| `SMART_CODING_CHUNK_SIZE`       | `25`      | Lines per chunk                                                                                         |
+| `SMART_CODING_CHUNKING_MODE`    | `smart`   | `smart` / `ast` / `line`                                                                                |
+| `SMART_CODING_WATCH_FILES`      | `false`   | Auto-reindex on changes                                                                                 |
+| `SMART_CODING_AUTO_INDEX_DELAY` | `false`   | Background index on startup. `false`=off (multi-agent safe), `true`=5s, or ms value. Single-agent only. |
+| `SMART_CODING_MAX_CPU_PERCENT`  | `50`      | CPU cap during indexing                                                                                 |
 
 ### Embedding Provider
 
@@ -440,13 +445,38 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 
 ### Vector Store
 
-| Variable                             | Default                   | Description         |
-| ------------------------------------ | ------------------------- | ------------------- |
-| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                  | `sqlite` / `milvus` |
-| `SMART_CODING_MILVUS_ADDRESS`        | —                         | Milvus endpoint     |
-| `SMART_CODING_MILVUS_TOKEN`          | —                         | Auth token          |
-| `SMART_CODING_MILVUS_DATABASE`       | `default`                 | Database name       |
-| `SMART_CODING_MILVUS_COLLECTION`     | `smart_coding_embeddings` | Collection          |
+| Variable                             | Default                   | Description                            |
+| ------------------------------------ | ------------------------- | -------------------------------------- |
+| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                  | `sqlite` / `milvus`                    |
+| `SMART_CODING_MILVUS_ADDRESS`        | —                         | Milvus endpoint or Zilliz Cloud URI    |
+| `SMART_CODING_MILVUS_TOKEN`          | —                         | Auth token (required for Zilliz Cloud) |
+| `SMART_CODING_MILVUS_DATABASE`       | `default`                 | Database name                          |
+| `SMART_CODING_MILVUS_COLLECTION`     | `smart_coding_embeddings` | Collection                             |
+
+### Zilliz Cloud (Managed Milvus)
+
+For teams or serverless deployments, use [Zilliz Cloud](https://zilliz.com) instead of self-hosted Docker:
+
+```json
+{
+  "env": {
+    "SMART_CODING_VECTOR_STORE_PROVIDER": "milvus",
+    "SMART_CODING_MILVUS_ADDRESS": "https://in03-xxxx.api.gcp-us-west1.zillizcloud.com",
+    "SMART_CODING_MILVUS_TOKEN": "your-zilliz-api-key"
+  }
+}
+```
+
+| Feature     | Milvus Standalone (Docker) | Zilliz Cloud                |
+| ----------- | -------------------------- | --------------------------- |
+| Setup       | Self-hosted, 3 containers  | Managed SaaS                |
+| RAM         | ~2.5 GB idle               | None (serverless)           |
+| Multi-agent | ✅ via shared Docker        | ✅ via shared endpoint       |
+| Scaling     | Manual                     | Auto-scaling                |
+| Free tier   | —                          | 2 collections, 1M vectors   |
+| Best for    | Local dev, single machine  | Team use, CI/CD, production |
+
+> Get your Zilliz Cloud URI and API key from the [Zilliz Console](https://cloud.zilliz.com) → Cluster → Connect.
 
 ### Search Tuning
 
@@ -547,7 +577,7 @@ flowchart TD
 | Branch switch               | Partial re-index  | ~5–15s                         |
 | `force=true`                | Full rebuild      | Same as first run              |
 
-> **Tip:** For day-to-day use, set `SMART_CODING_AUTO_INDEX_DELAY=5000` (default) to trigger background indexing 5 seconds after server start. Set to `false` to disable auto-index and rely on manual `b_index_codebase` calls.
+> ⚠️ **Multi-agent warning:** Auto-index is **disabled by default** to prevent concurrent Milvus writes when multiple agents share the same server. Set `SMART_CODING_AUTO_INDEX_DELAY=true` (5s) only if a **single agent** connects to this MCP server. Use `b_index_codebase` for explicit on-demand indexing in multi-agent setups.
 
 <details>
 <summary><strong>🐚 Shell Reindex for Bulk Operations</strong></summary>
@@ -572,6 +602,44 @@ node reindex.js /path/to/workspace --force
 > The CLI reindex script uses the same incremental engine under the hood. `--force` only forces re-embedding; it still uses the same hash-based delta for efficiency.
 
 </details>
+
+## Non-Blocking Indexing Workflow
+
+All indexing operations run in the **background** and return immediately. The agent can search while indexing continues.
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant MCP as semantic-code-mcp
+    participant BG as Background Thread
+    participant Store as Milvus / SQLite
+
+    Agent->>MCP: b_index_codebase(force=false)
+    MCP->>BG: startBackgroundIndexing()
+    MCP-->>Agent: {status: "started", message: "..."}
+    Note over Agent: ⚡ Returns instantly
+
+    loop Poll every 2-3s
+        Agent->>MCP: f_get_status()
+        MCP-->>Agent: {index.status: "indexing", progress: "150/500 files"}
+    end
+
+    BG->>Store: upsert vectors
+    BG-->>MCP: done
+
+    Agent->>MCP: f_get_status()
+    MCP-->>Agent: {index.status: "ready"}
+
+    Agent->>MCP: a_semantic_search(query)
+    MCP-->>Agent: [results]
+```
+
+**Rules for agents:**
+1. **Always call `f_get_status` first** — check workspace and indexing status
+2. **Use `e_set_workspace` if workspace is wrong** — before any indexing
+3. **Poll `f_get_status` until `index.status: "ready"`** before relying on search results
+4. **Progressive search is supported** — `a_semantic_search` works during indexing with partial results
+5. **`SMART_CODING_AUTO_INDEX_DELAY=false`** by default — use `b_index_codebase` for explicit on-demand indexing in multi-agent setups
 
 ## Privacy
 
