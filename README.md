@@ -318,54 +318,18 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 ## Architecture
 
 ```mermaid
-graph TB
-    subgraph MCP["MCP Server"]
-        CFG["config.js"]
-    end
+graph TD
+    A["MCP Server — index.js"] --> B["Features"]
+    B --> B1["hybrid-search"]
+    B --> B2["index-codebase"]
+    B --> B3["set-workspace / get-status / clear-cache"]
 
-    subgraph Features
-        SEARCH["hybrid-search.js"]
-        INDEX["index-codebase.js"]
-        STATUS["get-status.js"]
-        WORKSPACE["set-workspace.js"]
-        VERSION["check-last-version.js"]
-        CLEAR["clear-cache.js"]
-    end
+    B2 --> C["Code Chunking — AST or Smart Regex"]
+    C --> D["Embedding — Local / Gemini / Vertex / OpenAI"]
+    D --> E["Vector Store — SQLite or Milvus"]
 
-    subgraph Embeddings["Embedding Providers"]
-        LOCAL["mrl-embedder.js — Local"]
-        GEMINI["gemini-embedder.js — Gemini/Vertex"]
-        OAI["OpenAI / Compatible"]
-    end
-
-    subgraph Storage["Vector Storage"]
-        SQLITE["cache.js — SQLite"]
-        MILVUS["milvus-cache.js — Milvus"]
-        FACTORY["cache-factory.js"]
-    end
-
-    subgraph Chunking["Code Chunking"]
-        AST["ast-chunker.js — Tree-sitter"]
-        SMART["utils.js — Smart Regex"]
-    end
-
-    CFG --> SEARCH
-    CFG --> INDEX
-    INDEX --> AST
-    INDEX --> SMART
-    AST --> LOCAL
-    AST --> GEMINI
-    AST --> OAI
-    SMART --> LOCAL
-    SMART --> GEMINI
-    LOCAL --> FACTORY
-    GEMINI --> FACTORY
-    OAI --> FACTORY
-    FACTORY --> SQLITE
-    FACTORY --> MILVUS
-    SEARCH --> LOCAL
-    SEARCH --> GEMINI
-    SEARCH --> FACTORY
+    B1 --> D
+    B1 --> E
 ```
 
 ## How It Works
