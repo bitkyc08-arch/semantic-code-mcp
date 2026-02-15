@@ -20,6 +20,15 @@ Traditional `grep` and keyword search break down when you don't know the exact t
 
 Based on [Cursor's research](https://cursor.com/blog/semsearch) showing semantic search improves AI agent performance by 12.5%.
 
+```mermaid
+graph LR
+    A["Claude Code"] --> M["Milvus Standalone\n(Docker)"]
+    B["Codex"] --> M
+    C["Copilot"] --> M
+    D["Antigravity"] --> M
+    M --> V["Shared Vector Index"]
+```
+
 ## Quick Start
 
 ```bash
@@ -192,15 +201,6 @@ CPU capped at 50% during indexing. Your machine stays responsive.
 
 Multiple AI agents (Claude Code, Codex, Copilot, Antigravity) can query the same vector index simultaneously via **Milvus Standalone** (Docker). No file locking, no index corruption.
 
-```mermaid
-graph LR
-    A["Claude Code"] --> M["Milvus Standalone\n(Docker)"]
-    B["Codex"] --> M
-    C["Copilot"] --> M
-    D["Antigravity"] --> M
-    M --> V["Shared Vector Index"]
-```
-
 <details>
 <summary><strong>Docker Setup (Milvus Standalone)</strong></summary>
 
@@ -219,17 +219,18 @@ graph LR
 | **etcd**       | Metadata store (cluster coordination) | `coreos/etcd`     |
 | **minio**      | Object storage (index files, logs)    | `minio/minio`     |
 
-**System Requirements:**
+#### Performance Guidelines
 
 | Resource | Minimum  | Recommended                   |
 | -------- | -------- | ----------------------------- |
 | RAM      | **4 GB** | 8 GB+                         |
 | Disk     | 10 GB    | 50 GB+ (scales with codebase) |
+| CPU      | 2 cores  | 4+ cores                      |
 | Docker   | v20+     | Latest                        |
 
-> ⚠️ Milvus Standalone idles at ~2.5 GB RAM. Machines with < 4 GB will experience swap thrashing.
+> ⚠️ **RAM is the critical bottleneck.** Milvus Standalone idles at ~2.5 GB RAM across the 3 containers. Machines with < 4 GB will experience swap thrashing and gRPC timeouts. Check with `docker stats`.
 
-**1. Install with Docker Compose:**
+#### 1. Install with Docker Compose
 
 ```yaml
 # docker-compose.yml
@@ -278,7 +279,10 @@ volumes:
   milvus-data:
 ```
 
+#### 2. Start & Verify
+
 ```bash
+# Start all 3 containers
 docker compose up -d
 
 # Verify all 3 containers are running
@@ -287,9 +291,12 @@ docker compose ps
 # etcd         running
 # minio        running
 # standalone   running (healthy)
+
+# Check RAM usage (expect ~2.5 GB total idle)
+docker stats --no-stream
 ```
 
-**2. Configure MCP to use Milvus:**
+#### 3. Configure MCP to use Milvus
 
 ```json
 {
@@ -300,15 +307,43 @@ docker compose ps
 }
 ```
 
-**3. Verify connection:**
+#### 4. Verify connection
 
 ```bash
+# Should return collection list (may be empty initially)
 curl http://localhost:19530/v1/vector/collections
 ```
 
-**4. Monitoring:**
-- MinIO Console: http://localhost:9001 (minioadmin / minioadmin)
-- Milvus Health: http://localhost:9091/healthz
+#### 5. Lifecycle Management
+
+```bash
+# Stop all containers (preserves data)
+docker compose stop
+
+# Restart after reboot
+docker compose start
+
+# Full reset (removes all indexed vectors)
+docker compose down -v
+
+# View logs for debugging
+docker compose logs -f standalone
+```
+
+#### 6. Monitoring
+
+- **MinIO Console**: http://localhost:9001 (minioadmin / minioadmin)
+- **Milvus Health**: http://localhost:9091/healthz
+- **Container RAM**: `docker stats --no-stream`
+
+#### Troubleshooting
+
+| Symptom                               | Cause                        | Fix                                                                              |
+| ------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------- |
+| gRPC timeout / connection refused     | Milvus not fully started     | Wait 30–60s after `docker compose up -d`, check `docker compose logs standalone` |
+| Swap thrashing, slow queries          | < 4 GB RAM                   | Upgrade RAM or use SQLite for single-agent setups                                |
+| `etcd: mvcc: database space exceeded` | etcd compaction backlog      | `docker compose restart etcd`                                                    |
+| Milvus OOM killed                     | RAM pressure from other apps | Close heavy apps or increase Docker memory limit                                 |
 
 > **SQLite vs Milvus:** SQLite is single-process — only one agent can write at a time. Milvus handles concurrent reads/writes from multiple agents without conflicts. Use Milvus when running 2+ agents on the same codebase.
 
