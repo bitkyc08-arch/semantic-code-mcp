@@ -9,6 +9,34 @@ AI-powered semantic code search for coding agents. An MCP server that indexes yo
 
 > Ask *"where do we handle authentication?"* and find code that uses `login`, `session`, `verifyCredentials` — even when no file contains the word "authentication."
 
+## Quick Start
+
+```bash
+npx -y semantic-code-mcp@latest --workspace /path/to/your/project
+```
+
+MCP config:
+
+```json
+{
+  "mcpServers": {
+    "semantic-code-mcp": {
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/project"]
+    }
+  }
+}
+```
+
+```mermaid
+graph LR
+    A["Claude Code"] --> M["Milvus Standalone<br/>(Docker)"]
+    B["Codex"] --> M
+    C["Copilot"] --> M
+    D["Antigravity"] --> M
+    M --> V["Shared Vector Index"]
+```
+
 ## Why
 
 Traditional `grep` and keyword search break down when you don't know the exact terms used in the codebase. Semantic search bridges that gap:
@@ -20,37 +48,7 @@ Traditional `grep` and keyword search break down when you don't know the exact t
 
 Based on [Cursor's research](https://cursor.com/blog/semsearch) showing semantic search improves AI agent performance by 12.5%.
 
-```mermaid
-graph LR
-    A["Claude Code"] --> M["Milvus Standalone<br/>(Docker)"]
-    B["Codex"] --> M
-    C["Copilot"] --> M
-    D["Antigravity"] --> M
-    M --> V["Shared Vector Index"]
-```
-
-## Quick Start
-
-```bash
-npx -y semantic-code-mcp@latest --workspace /path/to/your/project
-```
-
-Recommended MCP config (portable, no local script dependency):
-
-```json
-{
-  "mcpServers": {
-    "semantic-code-mcp": {
-      "command": "npx",
-      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/your/project"]
-    }
-  }
-}
-```
-
-Do not use machine-specific script paths such as `~/.codex/bin/start-smart-coding-mcp.sh` in shared documentation.
-
-That's it. Your AI assistant now has semantic code search.
+## Setup
 
 <details>
 <summary><strong>Claude Code / Claude Desktop</strong></summary>
