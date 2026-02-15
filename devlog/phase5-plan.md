@@ -15,7 +15,7 @@
 
 ## 체크리스트
 
-### P5-1: mcp-markdown-rag — Multi-Provider 지원
+### P5-1: markdown-fastrag-mcp — Multi-Provider 지원
 - [x] `server.py`: `VertexEmbeddingFunction` 클래스 추가 (네이티브 :predict)
 - [x] `server.py`: openai-compatible 분기 추가
 - [x] `server.py`: Vertex 토큰 naive/aware datetime 충돌 버그 수정
@@ -69,7 +69,7 @@
 
 ## 수정 파일 목록
 
-### mcp-markdown-rag
+### markdown-fastrag-mcp
 
 | 파일             | 변경 내용                                                                      |
 | ---------------- | ------------------------------------------------------------------------------ |
@@ -108,7 +108,7 @@
 
 ## 검증 결과
 
-### mcp-markdown-rag
+### markdown-fastrag-mcp
 
 | 항목                                 | 결과                   |
 | ------------------------------------ | ---------------------- |

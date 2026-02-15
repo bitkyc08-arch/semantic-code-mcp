@@ -128,7 +128,7 @@ exec node "$SMART_CODING_ROOT/index.js" --workspace '/Users/jun/Developer/new'
 ### 100 vs 84 차이
 
 `fd`로 `js/ts/py/jsx/tsx` 5개 확장자만 검색하면 84개이지만, `smart-coding-mcp`는 `.sh`, `.css`, `.toml`, `.yaml` 등 수십 개 확장자를 지원.
-나머지 16개는 `sujong1`, `mcp-markdown-rag`, `.claude/.codex/.gemini` 설정, `001_ai-agents`, `300_permanent` 등 vault 전체에서 발견되는 비-테스트 코드 파일.
+나머지 16개는 `sujong1`, `markdown-fastrag-mcp`, `.claude/.codex/.gemini` 설정, `001_ai-agents`, `300_permanent` 등 vault 전체에서 발견되는 비-테스트 코드 파일.
 
 ---
 

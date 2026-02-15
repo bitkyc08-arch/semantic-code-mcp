@@ -87,7 +87,7 @@ const worker = new Worker(workerPath, {
 ```
 
 ```python
-# mcp-markdown-rag/server.py (Gemini 레퍼런스)
+# markdown-fastrag-mcp/server.py (Gemini 레퍼런스)
 embedding_fn = OpenAIEmbeddingFunction(
     model_name=os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
     api_key=os.getenv("GEMINI_API_KEY"),

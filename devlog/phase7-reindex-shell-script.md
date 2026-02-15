@@ -46,4 +46,4 @@ node reindex.js /path/to/workspace --force
 ## 변경 파일
 
 - `reindex.js` — 신규 (smart-coding-mcp)
-- `reindex.py` — 기존 (mcp-markdown-rag)
+- `reindex.py` — 기존 (markdown-fastrag-mcp)
