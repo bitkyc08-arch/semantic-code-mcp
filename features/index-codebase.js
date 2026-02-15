@@ -407,6 +407,7 @@ export class CodebaseIndexer {
     // Extract directory names from glob patterns in config.excludePatterns
     // Patterns like "**/node_modules/**" -> "node_modules"
     const excludeDirs = new Set();
+    const excludeFilePatterns = [];
     for (const pattern of this.config.excludePatterns) {
       // Extract directory names from glob patterns
       const match = pattern.match(/\*\*\/([^/*]+)\/?\*?\*?$/);
@@ -418,19 +419,69 @@ export class CodebaseIndexer {
       if (match2) {
         excludeDirs.add(match2[1]);
       }
+      // Extract file-level glob patterns like **/*.test.js, **/test_*.py
+      const fileMatch = pattern.match(/\*\*\/(\*[^/]+|[^/*]+\*[^/]*)$/);
+      if (fileMatch) {
+        const glob = fileMatch[1];
+        // Convert glob to regex: *.test.js -> /\.test\.js$/, test_*.py -> /^test_.*\.py$/
+        const escaped = glob
+          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*');
+        try {
+          excludeFilePatterns.push(new RegExp(`^${escaped}$`));
+        } catch {
+          // skip invalid patterns
+        }
+      }
     }
 
     // Always exclude cache directory
     excludeDirs.add(".smart-coding-cache");
 
+    const isExcludedDirectory = (dirName) => {
+      if (!dirName) {
+        return false;
+      }
+
+      const normalized = dirName.replace(/[\\/]+$/g, "");
+      if (excludeDirs.has(normalized)) {
+        return true;
+      }
+
+      const normalizedSegments = normalized.split(/[\\/]+/);
+      if (normalizedSegments.some((segment) => excludeDirs.has(segment))) {
+        return true;
+      }
+
+      const basename = path.basename(normalized);
+      if (excludeDirs.has(basename)) {
+        return true;
+      }
+
+      return false;
+    };
+
     if (this.config.verbose) {
-      console.error(`[Indexer] Using ${excludeDirs.size} exclude directories from config`);
+      console.error(`[Indexer] Using ${excludeDirs.size} exclude directories, ${excludeFilePatterns.length} file patterns from config`);
     }
+    // Debug: always log for diagnosing test exclusion
+    console.error(`[Indexer] excludeDirs: ${[...excludeDirs].join(', ')}`);
+    console.error(`[Indexer] excludeFilePatterns: ${excludeFilePatterns.map(r => r.source).join(', ')}`);
 
     const api = new fdir()
       .withFullPaths()
-      .exclude((dirName) => excludeDirs.has(dirName))
-      .filter((filePath) => extensions.has(path.extname(filePath)))
+      .exclude(isExcludedDirectory)
+      .filter((filePath) => {
+        if (!extensions.has(path.extname(filePath))) return false;
+        // Apply file-level exclusion patterns
+        if (excludeFilePatterns.length > 0) {
+          const basename = path.basename(filePath);
+          for (const re of excludeFilePatterns) {
+            if (re.test(basename)) return false;
+          }
+        }
+        return true;
+      })
       .crawl(this.config.searchDirectory);
 
     const files = await api.withPromise();
