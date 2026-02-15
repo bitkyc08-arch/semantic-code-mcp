@@ -43,6 +43,122 @@ Do not use machine-specific script paths such as `~/.codex/bin/start-smart-codin
 
 That's it. Your AI assistant now has semantic code search.
 
+<details>
+<summary><strong>Claude Code / Claude Desktop</strong></summary>
+
+```json
+{
+  "mcpServers": {
+    "semantic-code-mcp": {
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/project"]
+    }
+  }
+}
+```
+
+Claude Code: `~/.claude/settings.local.json` → `mcpServers`  
+Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+</details>
+
+<details>
+<summary><strong>VS Code / Cursor / Windsurf (Copilot)</strong></summary>
+
+Create `.vscode/mcp.json` in your project root:
+
+```json
+{
+  "servers": {
+    "semantic-code-mcp": {
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "${workspaceFolder}"]
+    }
+  }
+}
+```
+
+> VS Code and Cursor support `${workspaceFolder}`. Windsurf requires absolute paths.
+
+</details>
+
+<details>
+<summary><strong>Codex (OpenAI)</strong></summary>
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.semantic-code-mcp]
+command = "npx"
+args = ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/project"]
+```
+
+</details>
+
+<details>
+<summary><strong>Antigravity (Google)</strong></summary>
+
+`~/.gemini/antigravity/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "semantic-code-mcp": {
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/project"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>🐚 Shell Script (Monorepo / Large Codebases)</strong></summary>
+
+For monorepos or workspaces with 1000+ files, a shell wrapper script gives you:
+- **Real-time logs** — see indexing progress, error details, 429 retry status
+- **No MCP timeout** — long-running index operations won't be killed
+- **Environment isolation** — pin provider credentials per project
+
+Create `start-semantic-code-mcp.sh`:
+
+```bash
+#!/bin/bash
+export SMART_CODING_WORKSPACE="/path/to/monorepo"
+export SMART_CODING_EMBEDDING_PROVIDER="vertex"
+export SMART_CODING_VECTOR_STORE_PROVIDER="milvus"
+export SMART_CODING_MILVUS_ADDRESS="http://localhost:19530"
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+export SMART_CODING_VERTEX_PROJECT="your-gcp-project-id"
+
+cd /path/to/semantic-code-mcp
+exec node index.js
+```
+
+```bash
+chmod +x start-semantic-code-mcp.sh
+```
+
+Then reference in your MCP config:
+
+```json
+{
+  "semantic-code-mcp": {
+    "command": "/absolute/path/to/start-semantic-code-mcp.sh",
+    "args": []
+  }
+}
+```
+
+> **When to use shell scripts over npx:**
+> - Monorepo with multiple sub-projects sharing one index
+> - 1000+ files requiring long initial indexing
+> - Debugging 429 rate-limit or gRPC errors (need real-time stderr)
+> - Pinning specific provider credentials per workspace
+
+</details>
+
 ## Features
 
 ### Multi-Provider Embeddings
@@ -262,6 +378,67 @@ flowchart LR
 ```
 
 **Progressive indexing** — search works immediately while indexing continues in the background. Only changed files are re-indexed on subsequent runs.
+
+## Incremental Indexing & Optimization
+
+Semantic Code MCP uses a **hash-based incremental indexing** strategy to minimize redundant work:
+
+```mermaid
+flowchart TD
+    A["File discovered"] --> B{"Hash changed?"}
+    B -->|No| C["Skip — use cached vectors"]
+    B -->|Yes| D["Re-chunk & re-embed"]
+    D --> E["Update vector store"]
+    F["Deleted file detected"] --> G["Prune stale vectors"]
+
+    style C fill:#22543d,color:#c6f6d5
+    style D fill:#744210,color:#fefcbf
+    style G fill:#742a2a,color:#fed7d7
+```
+
+**How it works:**
+
+1. **File discovery** — glob patterns with `.gitignore`-aware filtering
+2. **Hash comparison** — each file's `mtime + size` is compared against the cached index
+3. **Delta processing** — only changed/new files are chunked and embedded
+4. **Stale pruning** — deleted files are removed from the vector store automatically
+5. **Progressive search** — queries work immediately, even mid-indexing
+
+**Performance characteristics:**
+
+| Scenario                    | Behavior          | Typical Time                   |
+| --------------------------- | ----------------- | ------------------------------ |
+| First run (500 files)       | Full index        | ~30–60s (API), ~2–5min (local) |
+| Subsequent run (no changes) | Hash check only   | < 1s                           |
+| 10 files changed            | Incremental delta | ~2–5s                          |
+| Branch switch               | Partial re-index  | ~5–15s                         |
+| `force=true`                | Full rebuild      | Same as first run              |
+
+> **Tip:** For day-to-day use, set `SMART_CODING_AUTO_INDEX_DELAY=5000` (default) to trigger background indexing 5 seconds after server start. Set to `false` to disable auto-index and rely on manual `b_index_codebase` calls.
+
+<details>
+<summary><strong>🐚 Shell Reindex for Bulk Operations</strong></summary>
+
+MCP tool calls have timeout limits and don't expose real-time logs. For bulk operations (initial setup, full rebuild, migration), use the CLI reindex script directly:
+
+```bash
+cd /path/to/semantic-code-mcp
+node reindex.js /path/to/workspace --force
+```
+
+**When to use CLI over MCP tools:**
+
+| Scenario                     | Use                                 |
+| ---------------------------- | ----------------------------------- |
+| Daily incremental updates    | MCP `b_index_codebase(force=false)` |
+| Initial workspace setup      | CLI `node reindex.js /path --force` |
+| Full rebuild after migration | CLI `node reindex.js /path --force` |
+| 1000+ file bulk update       | CLI (timeout-safe, real-time logs)  |
+| Debugging 429 / gRPC errors  | CLI (stderr visible)                |
+
+> The CLI reindex script uses the same incremental engine under the hood. `--force` only forces re-embedding; it still uses the same hash-based delta for efficiency.
+
+</details>
 
 ## Privacy
 
