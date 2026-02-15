@@ -7,6 +7,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import { loadConfig } from '../lib/config.js';
 
 /**
  * Get tool definition for MCP registration
@@ -27,7 +28,7 @@ export function getToolDefinition(config) {
           description: "Whether to clear existing cache before switching (default: false)"
         },
         reindex: {
-          type: "boolean", 
+          type: "boolean",
           description: "Whether to trigger re-indexing after switching (default: true)"
         }
       },
@@ -69,10 +70,33 @@ export class WorkspaceManager {
     }
 
     const oldPath = this.config.searchDirectory;
-    
-    // Update config
+
+    // Reload config for new workspace (re-detects project types & rebuilds excludePatterns)
+    const newConfig = await loadConfig(newPath);
+
+    // Preserve runtime overrides (env vars, embedding settings, etc.)
+    const preserveKeys = [
+      'embeddingProvider', 'embeddingModel', 'embeddingDimension',
+      'geminiApiKey', 'geminiModel', 'geminiBaseURL', 'geminiDimensions',
+      'geminiBatchSize', 'geminiBatchFlushMs', 'geminiMaxRetries',
+      'embeddingApiKey', 'embeddingBaseURL',
+      'vertexProject', 'vertexLocation',
+      'vectorStoreProvider', 'milvusAddress', 'milvusToken',
+      'milvusDatabase', 'milvusCollection',
+      'workerThreads', 'maxCpuPercent', 'batchDelay', 'maxWorkers',
+      'verbose'
+    ];
+    const runtimeOverrides = {};
+    for (const key of preserveKeys) {
+      if (this.config[key] !== undefined) {
+        runtimeOverrides[key] = this.config[key];
+      }
+    }
+
+    // Apply new config with runtime overrides
+    Object.assign(this.config, newConfig, runtimeOverrides);
     this.config.searchDirectory = newPath;
-    
+
     // Update cache directory
     const newCacheDir = path.join(newPath, '.smart-coding-cache');
     this.config.cacheDirectory = newCacheDir;
