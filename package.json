@@ -1,6 +1,6 @@
 {
   "name": "smart-coding-mcp-gemini-milvus",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Fork of smart-coding-mcp with Gemini embedding + Milvus ANN search. Drop-in MCP server for AI-powered semantic code search.",
   "type": "module",
   "main": "index.js",
