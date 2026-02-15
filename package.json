@@ -1,6 +1,6 @@
 {
   "name": "semantic-code-mcp",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "AI-powered semantic code search for coding agents. MCP server with multi-provider embeddings and hybrid search.",
   "type": "module",
   "main": "index.js",
@@ -42,12 +42,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitkyc08-arch/smart-coding-mcp.git"
+    "url": "https://github.com/bitkyc08-arch/semantic-code-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/bitkyc08-arch/smart-coding-mcp/issues"
+    "url": "https://github.com/bitkyc08-arch/semantic-code-mcp/issues"
   },
-  "homepage": "https://github.com/bitkyc08-arch/smart-coding-mcp#readme",
+  "homepage": "https://github.com/bitkyc08-arch/semantic-code-mcp#readme",
   "license": "MIT",
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",

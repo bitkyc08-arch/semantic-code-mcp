@@ -23,21 +23,23 @@ Based on [Cursor's research](https://cursor.com/blog/semsearch) showing semantic
 ## Quick Start
 
 ```bash
-npm install -g semantic-code-mcp
+npx -y semantic-code-mcp@latest --workspace /path/to/your/project
 ```
 
-Add to your MCP config:
+Recommended MCP config (portable, no local script dependency):
 
 ```json
 {
   "mcpServers": {
     "semantic-code-mcp": {
-      "command": "semantic-code-mcp",
-      "args": ["--workspace", "/path/to/your/project"]
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/your/project"]
     }
   }
 }
 ```
+
+Do not use machine-specific script paths such as `~/.codex/bin/start-smart-coding-mcp.sh` in shared documentation.
 
 That's it. Your AI assistant now has semantic code search.
 
@@ -99,12 +101,12 @@ CPU capped at 50% during indexing. Your machine stays responsive.
 {
   "mcpServers": {
     "code-frontend": {
-      "command": "semantic-code-mcp",
-      "args": ["--workspace", "/path/to/frontend"]
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/frontend"]
     },
     "code-backend": {
-      "command": "semantic-code-mcp",
-      "args": ["--workspace", "/path/to/backend"]
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/backend"]
     }
   }
 }
@@ -184,8 +186,8 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 {
   "mcpServers": {
     "semantic-code-mcp": {
-      "command": "semantic-code-mcp",
-      "args": ["--workspace", "/path/to/project"],
+      "command": "npx",
+      "args": ["-y", "semantic-code-mcp@latest", "--workspace", "/path/to/project"],
       "env": {
         "SMART_CODING_EMBEDDING_PROVIDER": "gemini",
         "SMART_CODING_GEMINI_API_KEY": "YOUR_KEY",
