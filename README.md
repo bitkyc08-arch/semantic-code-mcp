@@ -204,31 +204,89 @@ graph LR
 <details>
 <summary><strong>Docker Setup (Milvus Standalone)</strong></summary>
 
-**1. Start Milvus:**
+Milvus Standalone runs **3 containers** working together:
 
-```bash
-# docker-compose.yml (or use the official Milvus standalone script)
-curl -sfL https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh | bash
+```mermaid
+graph LR
+    A["semantic-code-mcp"] -->|"gRPC :19530"| M["milvus standalone"]
+    M -->|"object storage"| S["minio :9000"]
+    M -->|"metadata"| E["etcd :2379"]
 ```
 
-Or with Docker Compose:
+| Container      | Role                                  | Image             |
+| -------------- | ------------------------------------- | ----------------- |
+| **standalone** | Vector engine (gRPC :19530)           | `milvusdb/milvus` |
+| **etcd**       | Metadata store (cluster coordination) | `coreos/etcd`     |
+| **minio**      | Object storage (index files, logs)    | `minio/minio`     |
+
+**System Requirements:**
+
+| Resource | Minimum  | Recommended                   |
+| -------- | -------- | ----------------------------- |
+| RAM      | **4 GB** | 8 GB+                         |
+| Disk     | 10 GB    | 50 GB+ (scales with codebase) |
+| Docker   | v20+     | Latest                        |
+
+> ⚠️ Milvus Standalone idles at ~2.5 GB RAM. Machines with < 4 GB will experience swap thrashing.
+
+**1. Install with Docker Compose:**
 
 ```yaml
+# docker-compose.yml
 version: '3.5'
 services:
-  milvus:
-    image: milvusdb/milvus:latest
+  etcd:
+    image: coreos/etcd:v3.5.18
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    volumes:
+      - etcd-data:/etcd
+
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /minio_data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/minio_data
+
+  standalone:
+    image: milvusdb/milvus:v2.5.1
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
     ports:
       - "19530:19530"
       - "9091:9091"
     volumes:
       - milvus-data:/var/lib/milvus
+    depends_on:
+      - etcd
+      - minio
+
 volumes:
+  etcd-data:
+  minio-data:
   milvus-data:
 ```
 
 ```bash
 docker compose up -d
+
+# Verify all 3 containers are running
+docker compose ps
+# NAME         STATUS
+# etcd         running
+# minio        running
+# standalone   running (healthy)
 ```
 
 **2. Configure MCP to use Milvus:**
@@ -242,11 +300,15 @@ docker compose up -d
 }
 ```
 
-**3. Verify:**
+**3. Verify connection:**
 
 ```bash
 curl http://localhost:19530/v1/vector/collections
 ```
+
+**4. Monitoring:**
+- MinIO Console: http://localhost:9001 (minioadmin / minioadmin)
+- Milvus Health: http://localhost:9091/healthz
 
 > **SQLite vs Milvus:** SQLite is single-process — only one agent can write at a time. Milvus handles concurrent reads/writes from multiple agents without conflicts. Use Milvus when running 2+ agents on the same codebase.
 
