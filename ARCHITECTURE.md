@@ -1,6 +1,6 @@
 # Project Structure
 
-This document outlines the modular architecture of Smart Coding MCP.
+This document outlines the modular architecture of Semantic Code MCP.
 
 ## Directory Structure
 

@@ -1,11 +1,11 @@
 {
-  "name": "smart-coding-mcp-gemini-milvus",
-  "version": "1.2.0",
-  "description": "Fork of smart-coding-mcp with Gemini embedding + Milvus ANN search. Drop-in MCP server for AI-powered semantic code search.",
+  "name": "semantic-code-mcp",
+  "version": "2.0.0",
+  "description": "AI-powered semantic code search for coding agents. MCP server with multi-provider embeddings and hybrid search.",
   "type": "module",
   "main": "index.js",
   "bin": {
-    "smart-coding-mcp-gemini-milvus": "index.js"
+    "semantic-code-mcp": "index.js"
   },
   "scripts": {
     "start": "node index.js",
@@ -23,13 +23,12 @@
     "model-context-protocol",
     "hybrid-search",
     "code-intelligence",
-    "cursor",
-    "vscode",
-    "claude",
-    "codex",
-    "openai",
+    "milvus",
     "gemini",
-    "anthropic"
+    "openai",
+    "tree-sitter",
+    "ast",
+    "vector-search"
   ],
   "author": {
     "name": "bitkyc08",
