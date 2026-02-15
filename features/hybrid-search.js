@@ -9,7 +9,7 @@ export class HybridSearch {
     this.indexer = indexer; // Reference to indexer for status checking
   }
 
-  async search(query, maxResults) {
+  async search(query, maxResults, scopePath = "") {
     const hasAnnSearch = typeof this.cache?.searchByVector === "function";
 
     // Show warning if indexing is still in progress but we have some results
@@ -22,9 +22,12 @@ export class HybridSearch {
     const queryEmbed = await this.embedder(query, { pooling: "mean", normalize: true });
     const queryVector = Array.from(queryEmbed.data);
 
+    // Build Milvus filter for scoped search
+    const filter = scopePath ? `file like '${scopePath.replace(/'/g, "\\'")}%'` : null;
+
     if (hasAnnSearch) {
       const annTopK = Math.max(maxResults * 5, 20);
-      const candidates = await this.cache.searchByVector(queryVector, annTopK);
+      const candidates = await this.cache.searchByVector(queryVector, annTopK, filter);
 
       const scoredChunks = candidates.map((chunk) => {
         // Base semantic score from provider (Milvus or fallback cache) plus lexical boost.
@@ -124,11 +127,11 @@ export class HybridSearch {
     return results.map((r, idx) => {
       const relPath = path.relative(this.config.searchDirectory, r.file);
       return `## Result ${idx + 1} (Relevance: ${(r.score * 100).toFixed(1)}%)\n` +
-             `**File:** \`${relPath}\`\n` +
-             `**Lines:** ${r.startLine}-${r.endLine}\n\n` +
-             "```" + path.extname(r.file).slice(1) + "\n" +
-             r.content + "\n" +
-             "```\n";
+        `**File:** \`${relPath}\`\n` +
+        `**Lines:** ${r.startLine}-${r.endLine}\n\n` +
+        "```" + path.extname(r.file).slice(1) + "\n" +
+        r.content + "\n" +
+        "```\n";
     }).join("\n");
   }
 }
@@ -141,14 +144,19 @@ export function getToolDefinition(config) {
     inputSchema: {
       type: "object",
       properties: {
-        query: { 
-          type: "string", 
-          description: "Search query - can be natural language (e.g., 'where do we handle user login') or specific terms" 
+        query: {
+          type: "string",
+          description: "Search query - can be natural language (e.g., 'where do we handle user login') or specific terms"
         },
         maxResults: {
           type: "number",
           description: "Maximum number of results to return (default: from config)",
           default: config.maxResults
+        },
+        scopePath: {
+          type: "string",
+          description: "Limit search to files under this absolute path prefix (e.g., '/path/to/subfolder'). Empty string searches all.",
+          default: ""
         }
       },
       required: ["query"]
@@ -167,9 +175,10 @@ export function getToolDefinition(config) {
 export async function handleToolCall(request, hybridSearch) {
   const query = request.params.arguments.query;
   const maxResults = request.params.arguments.maxResults || hybridSearch.config.maxResults;
-  
-  const { results, message, indexingWarning } = await hybridSearch.search(query, maxResults);
-  
+  const scopePath = request.params.arguments.scopePath || "";
+
+  const { results, message, indexingWarning } = await hybridSearch.search(query, maxResults, scopePath);
+
   if (message) {
     return {
       content: [{ type: "text", text: message }]
@@ -177,12 +186,12 @@ export async function handleToolCall(request, hybridSearch) {
   }
 
   let formattedText = hybridSearch.formatResults(results);
-  
+
   // Prepend indexing warning if present
   if (indexingWarning) {
     formattedText = indexingWarning + formattedText;
   }
-  
+
   return {
     content: [{ type: "text", text: formattedText }]
   };
