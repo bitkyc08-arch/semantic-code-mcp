@@ -1,6 +1,6 @@
 {
   "name": "semantic-code-mcp",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "AI-powered semantic code search for coding agents. MCP server with multi-provider embeddings and hybrid search.",
   "type": "module",
   "main": "index.js",
