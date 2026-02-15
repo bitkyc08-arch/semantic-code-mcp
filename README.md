@@ -47,13 +47,13 @@ That's it. Your AI assistant now has semantic code search.
 
 ### Multi-Provider Embeddings
 
-| Provider | Model | Privacy | Speed |
-|----------|-------|---------|-------|
-| **Local** (default) | nomic-embed-text-v1.5 | 100% local | ~50ms/chunk |
-| **Gemini** | gemini-embedding-001 | API call | Fast, batched |
-| **OpenAI** | text-embedding-3-small | API call | Fast |
-| **OpenAI-compatible** | Any compatible endpoint | Varies | Varies |
-| **Vertex AI** | Google Cloud models | GCP | Fast |
+| Provider              | Model                   | Privacy    | Speed         |
+| --------------------- | ----------------------- | ---------- | ------------- |
+| **Local** (default)   | nomic-embed-text-v1.5   | 100% local | ~50ms/chunk   |
+| **Gemini**            | gemini-embedding-001    | API call   | Fast, batched |
+| **OpenAI**            | text-embedding-3-small  | API call   | Fast          |
+| **OpenAI-compatible** | Any compatible endpoint | Varies     | Varies        |
+| **Vertex AI**         | Google Cloud models     | GCP        | Fast          |
 
 ### Flexible Vector Storage
 
@@ -74,26 +74,26 @@ CPU capped at 50% during indexing. Your machine stays responsive.
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `a_semantic_search` | Find code by meaning. Hybrid semantic + exact match scoring. |
-| `b_index_codebase` | Trigger manual reindex (normally automatic & incremental). |
-| `c_clear_cache` | Reset embeddings cache entirely. |
-| `d_check_last_version` | Look up latest package version from 20+ registries. |
-| `e_set_workspace` | Switch project at runtime without restart. |
-| `f_get_status` | Server health: version, index progress, config. |
+| Tool                   | Description                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| `a_semantic_search`    | Find code by meaning. Hybrid semantic + exact match scoring. |
+| `b_index_codebase`     | Trigger manual reindex (normally automatic & incremental).   |
+| `c_clear_cache`        | Reset embeddings cache entirely.                             |
+| `d_check_last_version` | Look up latest package version from 20+ registries.          |
+| `e_set_workspace`      | Switch project at runtime without restart.                   |
+| `f_get_status`         | Server health: version, index progress, config.              |
 
 ## IDE Setup
 
-| IDE / App | Guide | `${workspaceFolder}` |
-|-----------|-------|----------------------|
-| **VS Code** | [Setup](docs/ide-setup/vscode.md) | ✅ |
-| **Cursor** | [Setup](docs/ide-setup/cursor.md) | ✅ |
-| **Windsurf** | [Setup](docs/ide-setup/windsurf.md) | ❌ |
-| **Claude Desktop** | [Setup](docs/ide-setup/claude-desktop.md) | ❌ |
-| **OpenCode** | [Setup](docs/ide-setup/opencode.md) | ❌ |
-| **Raycast** | [Setup](docs/ide-setup/raycast.md) | ❌ |
-| **Antigravity** | [Setup](docs/ide-setup/antigravity.md) | ❌ |
+| IDE / App          | Guide                                     | `${workspaceFolder}` |
+| ------------------ | ----------------------------------------- | -------------------- |
+| **VS Code**        | [Setup](docs/ide-setup/vscode.md)         | ✅                    |
+| **Cursor**         | [Setup](docs/ide-setup/cursor.md)         | ✅                    |
+| **Windsurf**       | [Setup](docs/ide-setup/windsurf.md)       | ❌                    |
+| **Claude Desktop** | [Setup](docs/ide-setup/claude-desktop.md) | ❌                    |
+| **OpenCode**       | [Setup](docs/ide-setup/opencode.md)       | ❌                    |
+| **Raycast**        | [Setup](docs/ide-setup/raycast.md)        | ❌                    |
+| **Antigravity**    | [Setup](docs/ide-setup/antigravity.md)    | ❌                    |
 
 ### Multi-Project
 
@@ -118,67 +118,67 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 
 ### Core
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_VERBOSE` | `false` | Detailed logging |
-| `SMART_CODING_MAX_RESULTS` | `5` | Search results returned |
-| `SMART_CODING_BATCH_SIZE` | `100` | Files per parallel batch |
-| `SMART_CODING_MAX_FILE_SIZE` | `1048576` | Max file size (1MB) |
-| `SMART_CODING_CHUNK_SIZE` | `25` | Lines per chunk |
-| `SMART_CODING_CHUNKING_MODE` | `smart` | `smart` / `ast` / `line` |
-| `SMART_CODING_WATCH_FILES` | `false` | Auto-reindex on changes |
-| `SMART_CODING_AUTO_INDEX_DELAY` | `5000` | Background index delay (ms) |
-| `SMART_CODING_MAX_CPU_PERCENT` | `50` | CPU cap during indexing |
+| Variable                        | Default   | Description                 |
+| ------------------------------- | --------- | --------------------------- |
+| `SMART_CODING_VERBOSE`          | `false`   | Detailed logging            |
+| `SMART_CODING_MAX_RESULTS`      | `5`       | Search results returned     |
+| `SMART_CODING_BATCH_SIZE`       | `100`     | Files per parallel batch    |
+| `SMART_CODING_MAX_FILE_SIZE`    | `1048576` | Max file size (1MB)         |
+| `SMART_CODING_CHUNK_SIZE`       | `25`      | Lines per chunk             |
+| `SMART_CODING_CHUNKING_MODE`    | `smart`   | `smart` / `ast` / `line`    |
+| `SMART_CODING_WATCH_FILES`      | `false`   | Auto-reindex on changes     |
+| `SMART_CODING_AUTO_INDEX_DELAY` | `5000`    | Background index delay (ms) |
+| `SMART_CODING_MAX_CPU_PERCENT`  | `50`      | CPU cap during indexing     |
 
 ### Embedding Provider
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_EMBEDDING_PROVIDER` | `local` | `local` / `gemini` / `openai` / `openai-compatible` / `vertex` |
-| `SMART_CODING_EMBEDDING_MODEL` | `nomic-ai/nomic-embed-text-v1.5` | Model name |
-| `SMART_CODING_EMBEDDING_DIMENSION` | `128` | MRL dimension (64–768) |
-| `SMART_CODING_DEVICE` | `auto` | `cpu` / `webgpu` / `auto` |
+| Variable                           | Default                          | Description                                                    |
+| ---------------------------------- | -------------------------------- | -------------------------------------------------------------- |
+| `SMART_CODING_EMBEDDING_PROVIDER`  | `local`                          | `local` / `gemini` / `openai` / `openai-compatible` / `vertex` |
+| `SMART_CODING_EMBEDDING_MODEL`     | `nomic-ai/nomic-embed-text-v1.5` | Model name                                                     |
+| `SMART_CODING_EMBEDDING_DIMENSION` | `128`                            | MRL dimension (64–768)                                         |
+| `SMART_CODING_DEVICE`              | `auto`                           | `cpu` / `webgpu` / `auto`                                      |
 
 ### Gemini
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_GEMINI_API_KEY` | — | API key |
-| `SMART_CODING_GEMINI_MODEL` | `gemini-embedding-001` | Model |
-| `SMART_CODING_GEMINI_DIMENSIONS` | `768` | Output dimensions |
-| `SMART_CODING_GEMINI_BATCH_SIZE` | `24` | Micro-batch size |
-| `SMART_CODING_GEMINI_MAX_RETRIES` | `3` | Retry count |
+| Variable                          | Default                | Description       |
+| --------------------------------- | ---------------------- | ----------------- |
+| `SMART_CODING_GEMINI_API_KEY`     | —                      | API key           |
+| `SMART_CODING_GEMINI_MODEL`       | `gemini-embedding-001` | Model             |
+| `SMART_CODING_GEMINI_DIMENSIONS`  | `768`                  | Output dimensions |
+| `SMART_CODING_GEMINI_BATCH_SIZE`  | `24`                   | Micro-batch size  |
+| `SMART_CODING_GEMINI_MAX_RETRIES` | `3`                    | Retry count       |
 
 ### OpenAI / Compatible
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_EMBEDDING_API_KEY` | — | API key |
-| `SMART_CODING_EMBEDDING_BASE_URL` | — | Base URL (compatible only) |
+| Variable                          | Default | Description                |
+| --------------------------------- | ------- | -------------------------- |
+| `SMART_CODING_EMBEDDING_API_KEY`  | —       | API key                    |
+| `SMART_CODING_EMBEDDING_BASE_URL` | —       | Base URL (compatible only) |
 
 ### Vertex AI
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_VERTEX_PROJECT` | — | GCP project ID |
-| `SMART_CODING_VERTEX_LOCATION` | `us-central1` | Region |
+| Variable                       | Default       | Description    |
+| ------------------------------ | ------------- | -------------- |
+| `SMART_CODING_VERTEX_PROJECT`  | —             | GCP project ID |
+| `SMART_CODING_VERTEX_LOCATION` | `us-central1` | Region         |
 
 ### Vector Store
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite` | `sqlite` / `milvus` |
-| `SMART_CODING_MILVUS_ADDRESS` | — | Milvus endpoint |
-| `SMART_CODING_MILVUS_TOKEN` | — | Auth token |
-| `SMART_CODING_MILVUS_DATABASE` | `default` | Database name |
-| `SMART_CODING_MILVUS_COLLECTION` | `smart_coding_embeddings` | Collection |
+| Variable                             | Default                   | Description         |
+| ------------------------------------ | ------------------------- | ------------------- |
+| `SMART_CODING_VECTOR_STORE_PROVIDER` | `sqlite`                  | `sqlite` / `milvus` |
+| `SMART_CODING_MILVUS_ADDRESS`        | —                         | Milvus endpoint     |
+| `SMART_CODING_MILVUS_TOKEN`          | —                         | Auth token          |
+| `SMART_CODING_MILVUS_DATABASE`       | `default`                 | Database name       |
+| `SMART_CODING_MILVUS_COLLECTION`     | `smart_coding_embeddings` | Collection          |
 
 ### Search Tuning
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SMART_CODING_SEMANTIC_WEIGHT` | `0.7` | Semantic vs exact weight |
-| `SMART_CODING_EXACT_MATCH_BOOST` | `1.5` | Exact match multiplier |
+| Variable                         | Default | Description              |
+| -------------------------------- | ------- | ------------------------ |
+| `SMART_CODING_SEMANTIC_WEIGHT`   | `0.7`   | Semantic vs exact weight |
+| `SMART_CODING_EXACT_MATCH_BOOST` | `1.5`   | Exact match multiplier   |
 
 ### Example with Gemini + Milvus
 
@@ -201,44 +201,64 @@ All settings via environment variables. Prefix: `SMART_CODING_`.
 
 ## Architecture
 
-```
-semantic-code-mcp/
-├── index.js              # MCP server entry point
-├── lib/
-│   ├── config.js         # Configuration loader
-│   ├── cache-factory.js  # SQLite / Milvus provider selection
-│   ├── cache.js          # SQLite vector store
-│   ├── milvus-cache.js   # Milvus vector store
-│   ├── mrl-embedder.js   # Local MRL embedder
-│   ├── gemini-embedder.js# Gemini API embedder
-│   ├── ast-chunker.js    # Tree-sitter AST chunking
-│   ├── tokenizer.js      # Token counting
-│   └── utils.js          # Cosine similarity, hashing, smart chunking
-├── features/
-│   ├── hybrid-search.js  # Semantic + exact match search
-│   ├── index-codebase.js # File discovery & incremental indexing
-│   ├── clear-cache.js    # Cache reset
-│   ├── check-last-version.js  # Package version lookup
-│   ├── set-workspace.js  # Runtime workspace switching
-│   └── get-status.js     # Server status
-└── test/                 # Vitest test suite
+```mermaid
+graph TB
+    subgraph MCP["MCP Server (index.js)"]
+        direction TB
+        CFG["config.js<br/>Configuration"]
+    end
+
+    subgraph Features
+        SEARCH["hybrid-search.js<br/>Semantic + Exact Match"]
+        INDEX["index-codebase.js<br/>File Discovery & Indexing"]
+        STATUS["get-status.js<br/>Server Health"]
+        WORKSPACE["set-workspace.js<br/>Runtime Switching"]
+        VERSION["check-last-version.js<br/>Registry Lookup"]
+        CLEAR["clear-cache.js<br/>Cache Reset"]
+    end
+
+    subgraph Embeddings["Embedding Providers"]
+        LOCAL["mrl-embedder.js<br/>nomic-embed-text v1.5"]
+        GEMINI["gemini-embedder.js<br/>Gemini / Vertex AI"]
+        OAI["OpenAI / Compatible"]
+    end
+
+    subgraph Storage["Vector Storage"]
+        SQLITE["cache.js<br/>SQLite (default)"]
+        MILVUS["milvus-cache.js<br/>Milvus ANN"]
+        FACTORY["cache-factory.js<br/>Provider Selection"]
+    end
+
+    subgraph Chunking["Code Chunking"]
+        AST["ast-chunker.js<br/>Tree-sitter AST"]
+        SMART["utils.js<br/>Smart Regex"]
+    end
+
+    MCP --> Features
+    INDEX --> Chunking --> Embeddings --> FACTORY
+    FACTORY --> SQLITE
+    FACTORY --> MILVUS
+    SEARCH --> Embeddings
+    SEARCH --> FACTORY
 ```
 
 ## How It Works
 
-```
-Your code files
-    ↓ glob + .gitignore-aware discovery
-Smart/AST chunking
-    ↓ language-aware splitting
-AI embedding (local or API)
-    ↓ vector generation
-SQLite or Milvus storage
-    ↓ incremental, hash-based updates
+```mermaid
+flowchart LR
+    A["📁 Source Files"] -->|glob + .gitignore| B["✂️ Smart/AST\nChunking"]
+    B -->|language-aware| C["🧠 AI Embedding\n(Local or API)"]
+    C -->|vectors| D["💾 SQLite / Milvus\nStorage"]
+    D -->|incremental hash| D
 
-Search query
-    ↓ embed query → cosine similarity → exact match boost
-Top N results with relevance scores
+    E["🔍 Search Query"] -->|embed| C
+    C -->|cosine similarity| F["📊 Hybrid Scoring\nsemantic + exact match"]
+    F --> G["🎯 Top N Results\nwith relevance scores"]
+
+    style A fill:#2d3748,color:#e2e8f0
+    style C fill:#553c9a,color:#e9d8fd
+    style D fill:#2a4365,color:#bee3f8
+    style G fill:#22543d,color:#c6f6d5
 ```
 
 **Progressive indexing** — search works immediately while indexing continues in the background. Only changed files are re-indexed on subsequent runs.
@@ -258,4 +278,4 @@ See [LICENSE](LICENSE) for full text.
 
 ---
 
-*Built on [smart-coding-mcp](https://github.com/omarHaris/smart-coding-mcp) by Omar Haris. Extended with multi-provider embeddings, Milvus ANN search, AST chunking, resource throttling, and comprehensive test suite.*
+*Forked from [smart-coding-mcp](https://github.com/omarHaris/smart-coding-mcp) by Omar Haris. Extended with multi-provider embeddings (Gemini, Vertex AI, OpenAI), Milvus ANN search, AST chunking, resource throttling, and comprehensive test suite.*
