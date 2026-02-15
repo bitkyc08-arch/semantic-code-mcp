@@ -660,6 +660,42 @@ sequenceDiagram
 - **Local mode**: everything runs on your machine. Code never leaves your system.
 - **API mode**: code chunks are sent to the embedding API for vectorization. No telemetry beyond provider API calls.
 
+## Agent Rules (AGENTS.md Integration)
+
+This server has a **mandatory search role** defined in `AGENTS.md`:
+
+```markdown
+## Search Role: semantic-code-mcp
+
+- **Code semantic search**. Use after grep narrows scope, or when grep can't find the logic.
+  `a_semantic_search(query, maxResults=5)`. For duplicate detection: `maxResults=10`.
+
+### DUAL-SEARCH MANDATE
+You MUST use at least 2 tools per search. Single-tool search is FORBIDDEN.
+
+### Decision Table
+
+| What you need             | 1st tool         | 2nd tool (REQUIRED) | NEVER use |
+| ------------------------- | ---------------- | ------------------- | --------- |
+| Exact symbol / function   | `grep`           | Code RAG or view    | Doc RAG   |
+| Code logic understanding  | Code RAG         | grep → `view_file`  | Doc RAG   |
+| Config value across files | `grep --include` | Doc RAG             | —         |
+
+### Parameters
+- maxResults: quick=3, general=5, comprehensive/dedup=10.
+- scopePath: ALWAYS set when target project is known.
+- Query language: English for code search.
+
+### Anti-patterns (FORBIDDEN)
+- ❌ Doc RAG to find code locations → ✅ grep or Code RAG
+- ❌ Code RAG for Korean workflow docs → ✅ Doc RAG
+- ❌ Single-tool search → ✅ Always 2+ tools
+```
+
+> Source: `AGENTS.md §3 Search`, `rag/SKILL.md`, `07.5-검색-도구-벤치마크`
+
+---
+
 ## License
 
 MIT License
