@@ -48,6 +48,8 @@ Traditional `grep` and keyword search break down when you don't know the exact t
 
 - **Concept matching** — `"error handling"` finds `try/catch`, `onRejected`, `fallback` patterns
 - **Typo-tolerant** — `"embeding modle"` still finds embedding model code
+- **Hybrid scoring** — semantic similarity (0.7 weight) + lexical exact/partial match boost (up to +1.5)
+- **Search dedup** — per-file result limiting (default 2) prevents a single large file from dominating results
 - **Context-aware chunking** — AST-based (Tree-sitter) or smart regex splitting preserves code structure
 - **Fast** — progressive indexing lets you search while the codebase is still being indexed
 
@@ -480,10 +482,19 @@ For teams or serverless deployments, use [Zilliz Cloud](https://zilliz.com) inst
 
 ### Search Tuning
 
-| Variable                         | Default | Description              |
-| -------------------------------- | ------- | ------------------------ |
-| `SMART_CODING_SEMANTIC_WEIGHT`   | `0.7`   | Semantic vs exact weight |
-| `SMART_CODING_EXACT_MATCH_BOOST` | `1.5`   | Exact match multiplier   |
+| Variable                          | Default | Description                                                                                 |
+| --------------------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `SMART_CODING_SEMANTIC_WEIGHT`    | `0.7`   | Semantic score weight (ANN similarity × this value)                                         |
+| `SMART_CODING_EXACT_MATCH_BOOST`  | `1.5`   | Boost added when query appears verbatim in chunk content                                    |
+| `SMART_CODING_DEDUP_MAX_PER_FILE` | `1`     | Max results per file. Ensures maximum source diversity — one chunk per file. `0` = disabled |
+
+**Hybrid scoring formula**: `score = ANN_similarity × semanticWeight + lexicalBoost`
+
+| Match type    | Boost value                          |
+| ------------- | ------------------------------------ |
+| Exact match   | `+exactMatchBoost` (default +1.5)    |
+| Partial match | `+(matchedWords / totalWords) × 0.3` |
+| No match      | +0                                   |
 
 ### Example with Gemini + Milvus
 
@@ -525,18 +536,21 @@ graph TD
 
 ```mermaid
 flowchart LR
-    A["📁 Source Files"] -->|glob + .gitignore| B["✂️ Smart/AST<br/>Chunking"]
+    A["📁 Source Files"] -->|"glob + .gitignore"| B["✂️ Smart/AST<br/>Chunking"]
     B -->|language-aware| C["🧠 AI Embedding<br/>(Local or API)"]
     C -->|vectors| D["💾 SQLite / Milvus<br/>Storage"]
     D -->|incremental hash| D
 
     E["🔍 Search Query"] -->|embed| C
-    C -->|cosine similarity| F["📊 Hybrid Scoring<br/>semantic + exact match"]
-    F --> G["🎯 Top N Results<br/>with relevance scores"]
+    C -->|"k×5 oversample"| F["📊 Hybrid Scoring<br/>semantic × 0.7<br/>+ lexical boost"]
+    F --> DD["🔄 Dedup<br/>max 2 per file"]
+    DD --> G["🎯 Top N Results<br/>with relevance scores"]
 
     style A fill:#2d3748,color:#e2e8f0
     style C fill:#553c9a,color:#e9d8fd
     style D fill:#2a4365,color:#bee3f8
+    style F fill:#744210,color:#fefcbf
+    style DD fill:#553c9a,color:#e9d8fd
     style G fill:#22543d,color:#c6f6d5
 ```
 
@@ -661,6 +675,8 @@ This project is a fork of [smart-coding-mcp](https://github.com/omarHaris/smart-
 **Key additions over upstream**:
 - Multi-provider embeddings (Gemini, Vertex AI, OpenAI, OpenAI-compatible)
 - Milvus vector store with ANN search for large codebases
+- **Hybrid search scoring** (semantic × 0.7 + lexical boost up to +1.5)
+- **Per-file dedup** in search results for diverse output
 - AST-based code chunking via Tree-sitter
 - Resource throttling (CPU cap at 50%)
 - Runtime workspace switching (`e_set_workspace`)

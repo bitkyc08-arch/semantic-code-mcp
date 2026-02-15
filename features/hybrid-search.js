@@ -50,9 +50,26 @@ export class HybridSearch {
         return { ...chunk, score };
       });
 
-      const results = scoredChunks
-        .sort((a, b) => b.score - a.score)
-        .slice(0, maxResults);
+      // Dedup: limit results per file to ensure diverse sources.
+      const dedupMax = Number(this.config.dedupMaxPerFile) || 0;
+      let results;
+      if (dedupMax > 0) {
+        results = [];
+        const fileCount = {};
+        for (const chunk of scoredChunks.sort((a, b) => b.score - a.score)) {
+          const fp = chunk.file;
+          const count = fileCount[fp] || 0;
+          if (count < dedupMax) {
+            results.push(chunk);
+            fileCount[fp] = count + 1;
+          }
+          if (results.length >= maxResults) break;
+        }
+      } else {
+        results = scoredChunks
+          .sort((a, b) => b.score - a.score)
+          .slice(0, maxResults);
+      }
 
       if (results.length === 0) {
         const stats = typeof this.cache?.getStats === "function"
@@ -112,9 +129,26 @@ export class HybridSearch {
       return { ...chunk, score };
     });
 
-    const results = scoredChunks
-      .sort((a, b) => b.score - a.score)
-      .slice(0, maxResults);
+    // Dedup: limit results per file to ensure diverse sources.
+    const dedupMax = Number(this.config.dedupMaxPerFile) || 0;
+    let results;
+    if (dedupMax > 0) {
+      results = [];
+      const fileCount = {};
+      for (const chunk of scoredChunks.sort((a, b) => b.score - a.score)) {
+        const fp = chunk.file;
+        const count = fileCount[fp] || 0;
+        if (count < dedupMax) {
+          results.push(chunk);
+          fileCount[fp] = count + 1;
+        }
+        if (results.length >= maxResults) break;
+      }
+    } else {
+      results = scoredChunks
+        .sort((a, b) => b.score - a.score)
+        .slice(0, maxResults);
+    }
 
     return { results, message: null, indexingWarning };
   }
