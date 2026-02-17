@@ -62,7 +62,7 @@ export class StatusReporter {
       totalChunks = vectorStore.length;
       totalFiles = new Set(vectorStore.map((v) => v.file)).size;
     }
-    
+
     // Get cache size (check for SQLite database)
     let cacheSizeBytes = 0;
     let cacheType = 'none';
@@ -92,7 +92,7 @@ export class StatusReporter {
     // Determine index status and progressive indexing info
     let indexStatus = 'empty';
     let progressiveIndexing = null;
-    
+
     if (this.indexer?.isIndexing) {
       indexStatus = 'indexing';
       // Include progressive indexing status
@@ -124,7 +124,7 @@ export class StatusReporter {
     return {
       version: packageJson.version,
       uptime: Math.floor((Date.now() - this.startTime) / 1000),
-      
+
       workspace: {
         path: this.config.searchDirectory,
         cacheDirectory: this.config.cacheDirectory
@@ -135,10 +135,10 @@ export class StatusReporter {
         name: this.embedder?.modelName || (
           isApiProvider
             ? (
-                configuredApiModel && !configuredApiModel.includes("nomic")
-                  ? configuredApiModel
-                  : defaultApiModel
-              )
+              configuredApiModel && !configuredApiModel.includes("nomic")
+                ? configuredApiModel
+                : defaultApiModel
+            )
             : this.config.embeddingModel
         ),
         dimension: this.embedder?.dimension || (
@@ -154,7 +154,10 @@ export class StatusReporter {
         filesIndexed: totalFiles,
         chunksCount: totalChunks,
         chunkingMode: this.config.chunkingMode,
-        ...(progressiveIndexing && { progressiveIndexing })
+        ...(progressiveIndexing && { progressiveIndexing }),
+        ...(this.indexer?.lastReconcileResult && {
+          lastReconcile: this.indexer.lastReconcileResult
+        }),
       },
 
       cache: {
@@ -174,7 +177,7 @@ export class StatusReporter {
         embeddingProvider: this.config.embeddingProvider,
         vectorStoreProvider
       },
-      
+
       resourceThrottling: {
         maxCpuPercent: this.config.maxCpuPercent,
         batchDelay: this.config.batchDelay,

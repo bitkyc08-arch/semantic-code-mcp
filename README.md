@@ -579,7 +579,46 @@ flowchart TD
 2. **Hash comparison** — each file's `mtime + size` is compared against the cached index
 3. **Delta processing** — only changed/new files are chunked and embedded
 4. **Stale pruning** — deleted files are removed from the vector store automatically
-5. **Progressive search** — queries work immediately, even mid-indexing
+5. **Reconciliation sweep** — see below
+6. **Progressive search** — queries work immediately, even mid-indexing
+
+### Reconciliation Sweep
+
+Hash-based pruning catches deletions during normal indexing, but can miss **ghost vectors** when:
+- The hash cache (`file-hashes.json`) is cleared (e.g., `c_clear_cache`)
+- Files are moved outside the workspace
+- A previous indexing job was interrupted
+
+The **reconciliation sweep** runs automatically after each `b_index_codebase` to catch these edge cases:
+
+```mermaid
+flowchart LR
+    A["🔍 Query Milvus\n(all file paths)"] --> B{"File exists\non disk?"}
+    B -->|Yes| C["✅ Keep"]
+    B -->|No| D["🗑️ Delete vectors\nfilter: file == '...'"]
+    D --> E["📊 Report via\nf_get_status"]
+
+    style A fill:#2a4365,color:#bee3f8
+    style C fill:#22543d,color:#c6f6d5
+    style D fill:#742a2a,color:#fed7d7
+    style E fill:#744210,color:#fefcbf
+```
+
+**Status response** (via `f_get_status`):
+
+```json
+{
+  "index": {
+    "status": "ready",
+    "lastReconcile": {
+      "orphans": 0,
+      "seconds": 0.43
+    }
+  }
+}
+```
+
+> Reconciliation is independent of `file-hashes.json` — it directly compares Milvus ↔ disk.
 
 **Performance characteristics:**
 
@@ -655,6 +694,74 @@ sequenceDiagram
 4. **Progressive search is supported** — `a_semantic_search` works during indexing with partial results
 5. **`SMART_CODING_AUTO_INDEX_DELAY=false`** by default — use `b_index_codebase` for explicit on-demand indexing in multi-agent setups
 
+### Indexing Architecture Internals
+
+<details>
+<summary><strong>Why no <code>to_thread</code> offloading? (Node.js vs Python)</strong></summary>
+
+The sister project [markdown-rag](https://github.com/user/markdown-fastrag-mcp) (Python/asyncio) wraps **every sync operation** in `asyncio.to_thread()` to prevent blocking the event loop. This project doesn't need that — here's why:
+
+| Operation                     | Python asyncio                              | Node.js                                                          |
+| ----------------------------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| File I/O (`stat`, `readFile`) | **Sync by default** — blocks event loop     | **Async by default** — `fs.promises.*` runs on libuv thread pool |
+| Network I/O (Milvus gRPC)     | `milvus_client.delete()` — **sync, blocks** | Native async via Promises                                        |
+| CPU-bound (embedding)         | GIL limits `to_thread` effectiveness        | `Worker threads` — true multi-core parallelism                   |
+| CPU-bound (chunking)          | `to_thread` offload needed                  | Event loop yields between `await` points                         |
+
+**In Python**, calling `os.stat()` or `milvus_client.insert()` inside an `async def` function **freezes the entire event loop** until the call completes. That's why markdown-rag needs 7 separate `asyncio.to_thread()` wrappers across its pipeline.
+
+**In Node.js**, `await fs.stat(file)` dispatches to the libuv thread pool automatically. The event loop stays responsive and can handle other MCP requests (e.g., `f_get_status`, `a_semantic_search`) while file I/O executes in the background.
+
+The only CPU-bound bottleneck — **embedding computation** — is offloaded to `Worker threads` (`worker_threads` module) for true multi-core parallelism. See `processChunksWithWorkers()` in `features/index-codebase.js`.
+
+```mermaid
+graph TD
+    A["MCP Request: b_index_codebase"] --> B["handleToolCall()"]
+    B --> C["startBackgroundIndexing() — fire-and-forget"]
+    C --> D["indexAll()"]
+    D --> E["discoverFiles() — async fs via libuv"]
+    E --> F["sortFilesByPriority() — async stat via libuv"]
+    F --> G["Per-file: fs.stat + fs.readFile — async"]
+    G --> H{"Workers available?"}
+    H -->|Yes| I["processChunksWithWorkers() — multi-core"]
+    H -->|No| J["processChunksSingleThreaded() — fallback"]
+    I --> K["Batch insert to vector store"]
+    J --> K
+    K --> L["cache.save()"]
+```
+
+</details>
+
+<details>
+<summary><strong>Delta strategy: unified new+modified handling</strong></summary>
+
+Unlike markdown-rag's explicit 3-way delta (`new_files` / `modified_files` / `deleted_files`), this project uses a **2-phase mtime→hash check** that handles new and modified files in a single code path:
+
+```
+For each file:
+  1. mtime unchanged?  → skip (definitely unchanged)
+  2. mtime changed → read content → compute hash
+  3. hash unchanged?   → update cached mtime, skip
+  4. hash changed?     → removeFileFromStore() + re-chunk + re-embed
+  5. Not in cache?     → removeFileFromStore() + re-chunk + re-embed  (new file)
+```
+
+**New files hit `removeFileFromStore()` (step 5)**, which is technically a no-op since there are no existing vectors for that file. This differs from markdown-rag, which explicitly skips delete for new files:
+
+| Aspect                   | semantic-code-mcp                       | markdown-rag                                       |
+| ------------------------ | --------------------------------------- | -------------------------------------------------- |
+| Delta classification     | 2-way (changed vs unchanged)            | 3-way (new / modified / deleted)                   |
+| New file handling        | `removeFileFromStore()` → **no-op**     | Explicit skip — no delete call                     |
+| Delete cost per file     | SQLite `DELETE WHERE file=?` — **<1ms** | Milvus gRPC `delete()` — **10–50ms**               |
+| Impact of 1000 new files | <1s total waste (negligible)            | 10–50s waste (significant)                         |
+| Deleted file pruning     | Batch prune in `indexAll()` step 1.5    | `get_index_delta_detailed()` returns explicit list |
+
+**Why this design is acceptable:** The vector store backend matters. With **SQLite**, a no-op delete is a sub-millisecond local operation. With **Milvus** (network gRPC), each no-op delete costs 10–50ms of round-trip time — that's why markdown-rag invested in the 3-way classification to eliminate 1,288 unnecessary gRPC calls.
+
+> **Future consideration:** If the Milvus backend (`milvus-cache.js`) shows measurable overhead on large new-file batches, a 3-way delta classification can be introduced. Currently, benchmarks show no meaningful difference for typical codebases (<5,000 files).
+
+</details>
+
 ## Privacy
 
 - **Local mode**: everything runs on your machine. Code never leaves your system.
@@ -718,3 +825,4 @@ This project is a fork of [smart-coding-mcp](https://github.com/omarHaris/smart-
 - Runtime workspace switching (`e_set_workspace`)
 - Package version checker across 20+ registries (`d_check_last_version`)
 - Comprehensive IDE setup guides (VS Code, Cursor, Windsurf, Claude Desktop, Antigravity)
+- **Reconciliation sweep** — post-index Milvus↔disk orphan cleanup

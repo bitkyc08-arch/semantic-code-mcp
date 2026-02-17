@@ -876,7 +876,7 @@ export class CodebaseIndexer {
         stats.totalChunks === 0 && totalChunks > 0 ? totalChunks : stats.totalChunks;
       const resolvedTotalFiles =
         stats.totalFiles === 0 && changedFiles > 0 ? changedFiles : stats.totalFiles;
-      return {
+      const result = {
         skipped: false,
         filesProcessed: changedFiles,
         chunksCreated: totalChunks,
@@ -887,6 +887,19 @@ export class CodebaseIndexer {
           ? `Indexed ${changedFiles} files (${totalChunks} chunks, ${skippedFiles} unchanged) in ${totalTime}s`
           : `All ${skippedFiles} files up to date`
       };
+
+      // Phase 12: Reconciliation sweep (after succeeded, search already allowed)
+      let reconciledOrphans = 0;
+      const tReconcile = Date.now();
+      try {
+        reconciledOrphans = await this.cache.reconcileOrphans();
+      } catch (err) {
+        console.error(`[Indexer] Reconciliation error: ${err.message}`);
+      }
+      const reconcileSeconds = parseFloat(((Date.now() - tReconcile) / 1000).toFixed(2));
+      this.lastReconcileResult = { orphans: reconciledOrphans, seconds: reconcileSeconds };
+
+      return { ...result, reconciledOrphans, reconcileSeconds };
     } finally {
       this.isIndexing = false;
       // Adjust estimated total after completion
