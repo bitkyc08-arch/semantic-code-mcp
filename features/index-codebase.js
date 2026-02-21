@@ -436,7 +436,7 @@ export class CodebaseIndexer {
     }
 
     // Always exclude cache directory
-    excludeDirs.add(".smart-coding-cache");
+    excludeDirs.add(".semantic-code-cache");
 
     const isExcludedDirectory = (dirName) => {
       if (!dirName) {

@@ -4,7 +4,7 @@ import { StatusReporter } from "../features/get-status.js";
 function makeConfig(overrides = {}) {
   return {
     searchDirectory: "/tmp/workspace",
-    cacheDirectory: "/tmp/workspace/.smart-coding-cache",
+    cacheDirectory: "/tmp/workspace/.semantic-code-cache",
     vectorStoreProvider: "milvus",
     embeddingProvider: "gemini",
     geminiModel: "gemini-embedding-001",

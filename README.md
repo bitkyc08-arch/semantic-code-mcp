@@ -187,7 +187,7 @@ Then reference in your MCP config:
 
 ### Flexible Vector Storage
 
-- **SQLite** (default) — zero-config, single-file `.smart-coding-cache/embeddings.db`
+- **SQLite** (default) — zero-config, single-file `.semantic-code-cache/embeddings.db`
 - **Milvus** — scalable ANN search for large codebases or shared team indexes
 
 ### Smart Code Chunking
@@ -826,3 +826,6 @@ This project is a fork of [smart-coding-mcp](https://github.com/omarHaris/smart-
 - Package version checker across 20+ registries (`d_check_last_version`)
 - Comprehensive IDE setup guides (VS Code, Cursor, Windsurf, Claude Desktop, Antigravity)
 - **Reconciliation sweep** — post-index Milvus↔disk orphan cleanup
+- Cache directory renamed to `.semantic-code-cache` (was `.smart-coding-cache`)
+
+See [devlog/](devlog/) for detailed phase-by-phase development history.

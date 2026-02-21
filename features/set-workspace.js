@@ -98,7 +98,7 @@ export class WorkspaceManager {
     this.config.searchDirectory = newPath;
 
     // Update cache directory
-    const newCacheDir = path.join(newPath, '.smart-coding-cache');
+    const newCacheDir = path.join(newPath, '.semantic-code-cache');
     this.config.cacheDirectory = newCacheDir;
 
     // Ensure cache directory exists

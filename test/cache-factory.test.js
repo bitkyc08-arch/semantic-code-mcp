@@ -5,7 +5,7 @@ import { MilvusCache } from "../lib/milvus-cache.js";
 
 const baseConfig = {
   enableCache: true,
-  cacheDirectory: ".smart-coding-cache",
+  cacheDirectory: ".semantic-code-cache",
   vectorStoreProvider: "sqlite",
   milvusAddress: ""
 };

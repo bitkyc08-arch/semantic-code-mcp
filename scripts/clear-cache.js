@@ -5,7 +5,7 @@ import path from "path";
 async function clearCache() {
   try {
     const configPath = path.join(process.cwd(), "config.json");
-    let cacheDir = "./.smart-coding-cache";
+    let cacheDir = "./.semantic-code-cache";
 
     // Try to load cache directory from config
     try {

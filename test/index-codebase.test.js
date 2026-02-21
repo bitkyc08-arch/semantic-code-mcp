@@ -147,8 +147,8 @@ describe('CodebaseIndexer', () => {
       const nodeModulesFiles = files.filter(f => f.includes('node_modules'));
       expect(nodeModulesFiles.length).toBe(0);
 
-      // No files from .smart-coding-cache
-      const cacheFiles = files.filter(f => f.includes('.smart-coding-cache'));
+      // No files from .semantic-code-cache
+      const cacheFiles = files.filter(f => f.includes('.semantic-code-cache'));
       expect(cacheFiles.length).toBe(0);
     });
   });
