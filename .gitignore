@@ -8,3 +8,4 @@ node_modules/
 
 # Internal development logs
 devlog/
+.semantic-code-cache/
