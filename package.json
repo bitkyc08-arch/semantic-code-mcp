@@ -32,7 +32,7 @@
   ],
   "author": {
     "name": "bitkyc08",
-    "url": "https://github.com/bitkyc08-arch"
+    "url": "https://github.com/lidge-jun"
   },
   "contributors": [
     {
@@ -42,12 +42,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitkyc08-arch/semantic-code-mcp.git"
+    "url": "https://github.com/lidge-jun/semantic-code-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/bitkyc08-arch/semantic-code-mcp/issues"
+    "url": "https://github.com/lidge-jun/semantic-code-mcp/issues"
   },
-  "homepage": "https://github.com/bitkyc08-arch/semantic-code-mcp#readme",
+  "homepage": "https://github.com/lidge-jun/semantic-code-mcp#readme",
   "license": "MIT",
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
